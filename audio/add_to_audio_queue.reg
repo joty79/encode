@@ -1,0 +1,191 @@
+Windows Registry Editor Version 5.00
+
+; ===============================
+; Add to Audio Queue - TOTALLY SILENT
+; ===============================
+
+; .mp4
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .mkv
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .avi
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.avi\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.avi\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .mov
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mov\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mov\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .wmv
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wmv\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wmv\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .mpg
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpg\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpg\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .mpeg
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpeg\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpeg\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .vob
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.vob\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.vob\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .webm
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.webm\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.webm\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .flv
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.flv\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.flv\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .m2ts
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.m2ts\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.m2ts\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .ts
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ts\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ts\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .mp3
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp3\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp3\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .aac
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.aac\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.aac\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .flac
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.flac\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.flac\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .wav
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wav\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wav\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .ogg
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ogg\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ogg\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .opus
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.opus\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.opus\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .m4a
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.m4a\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.m4a\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .wma
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wma\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wma\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .ac3
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ac3\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.ac3\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; .dts
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.dts\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.dts\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+
+; ===============================
+; Add to Audio Queue - FOLDER
+; ===============================
+[HKEY_CLASSES_ROOT\Directory\shell\AddToAudioQueue]
+@="Add to Audio Queue"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\Directory\shell\AddToAudioQueue\command]
+@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%V\""

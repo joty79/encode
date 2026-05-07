@@ -1,0 +1,22 @@
+# Runtime queue state
+**/queue/*.txt
+**/queue/*.log
+**/queue/*settings*.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# PowerShell/editor local state
+*.ps1xml
+*.code-workspace
+.vscode/
+
+# Archives generated or carried as runtime helper bundles
+*.rar
+*.zip
+
+# Windows clutter
+Thumbs.db
+desktop.ini

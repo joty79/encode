@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\RemuxToMP4]
+@="Remux to MP4 (Safe Mode)"
+"Icon"="d:\\Users\\joty79\\Documents\\Icons\\avidemux.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\RemuxToMP4\command]
+@="wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\RemuxToMP4.ps1\" -InputFile \"%1\""

@@ -1,0 +1,72 @@
+Windows Registry Editor Version 5.00
+
+; =========================
+; Folder context menu
+; =========================
+[HKEY_CLASSES_ROOT\Directory\shell\EncodeNvidiaH264]
+@="Encode folder (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\Directory\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%V\""
+
+; =========================
+; Single file context menus
+; =========================
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mkv\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.avi\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.avi\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mov\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mov\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wmv\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.wmv\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpg\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpg\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpeg\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mpeg\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.vob\shell\EncodeNvidiaH264]
+@="Encode video (NVIDIA H.264)"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.vob\shell\EncodeNvidiaH264\command]
+@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""

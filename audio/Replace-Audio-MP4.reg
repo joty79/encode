@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\replace_audio_aac]
+@="Replace audio (AAC)"
+"Icon"="d:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.mp4\shell\replace_audio_aac\command]
+@="wt -w 0 pwsh -NoExit -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\Replace-Audio-MP4.ps1\" \"%1\""

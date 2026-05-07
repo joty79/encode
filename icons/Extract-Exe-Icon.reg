@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.exe\shell\Extract Icon]
+"MUIVerb"="Extract Exe -> ICO"
+"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ResourceHacker.ico"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.exe\shell\Extract Icon\command]
+@="\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\Extract-Exe-Icon.ps1\" \"%1\""

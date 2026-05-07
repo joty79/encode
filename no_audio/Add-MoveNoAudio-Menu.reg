@@ -1,0 +1,17 @@
+Windows Registry Editor Version 5.00
+
+; Προσθήκη επιλογής στο Context Menu των Φακέλων
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\MoveNoAudio]
+@="Check Audio & Move"
+"Icon"="imageres.dll,-316"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\MoveNoAudio\command]
+@="wt.exe pwsh.exe -NoProfile -NoExit -File \"D:\\Users\\joty79\\scripts\\encode\\no_audio\\Move-NoAudio.ps1\" -TargetDirectory \"%V\""
+
+; Προσθήκη επιλογής στο Context Menu για το Φόντο των Φακέλων
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\MoveNoAudio]
+@="Check Audio & Move (Here)"
+"Icon"="imageres.dll,-316"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\MoveNoAudio\command]
+@="wt.exe pwsh.exe -NoProfile -NoExit -File \"D:\\Users\\joty79\\scripts\\encode\\no_audio\\Move-NoAudio.ps1\" -TargetDirectory \"%V\""
