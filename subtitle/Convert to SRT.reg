@@ -5,4 +5,4 @@ Windows Registry Editor Version 5.00
 "Icon"="d:\\Users\\joty79\\Documents\\Icons\\SubtitleEdit.ico"
 
 [HKEY_CLASSES_ROOT\SystemFileAssociations\.vtt\shell\ConvertToSRT\command]
-@="\"C:\\Program Files\\Subtitle Edit\\SubtitleEdit.exe\" /convert \"%1\" srt"
+@="wscript.exe \"d:\\Users\\joty79\\scripts\\encode\\subtitle\\Convert-to-SRT.vbs\" \"%1\""
