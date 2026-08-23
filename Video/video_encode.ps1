@@ -28,6 +28,16 @@ function Get-InterlaceInfo {
 
     $idetOut = & ffmpeg -hide_banner -loglevel info -i "$InputPath" `
         -filter:v idet -frames:v 300 -an -f rawvideo -y NUL 2>&1
+    $ffmpegExitCode = $LASTEXITCODE
+
+    if ($ffmpegExitCode -ne 0) {
+        return @{
+            Succeeded  = $false
+            ExitCode   = $ffmpegExitCode
+            Interlaced = $false
+            Field      = $null
+        }
+    }
 
     $text = $idetOut | Out-String
 
@@ -37,7 +47,7 @@ function Get-InterlaceInfo {
     )
 
     if ($matches.Count -eq 0) {
-        return @{ Interlaced = $false; Field = $null }
+        return @{ Succeeded = $true; ExitCode = 0; Interlaced = $false; Field = $null }
     }
 
     # TAKE LAST BLOCK (IMPORTANT)
@@ -48,12 +58,14 @@ function Get-InterlaceInfo {
 
     if (($tff + $bff) -gt 0) {
         return @{
+            Succeeded  = $true
+            ExitCode   = 0
             Interlaced = $true
             Field      = if ($bff -gt $tff) { "BFF" } else { "TFF" }
         }
     }
 
-    return @{ Interlaced = $false; Field = $null }
+    return @{ Succeeded = $true; ExitCode = 0; Interlaced = $false; Field = $null }
 }
 
 function New-QTGMCAvs {
@@ -81,10 +93,22 @@ function Get-AudioSyncAnalysis {
     param([string]$InputPath)
 
     # Run FFprobe for Video & Audio Streams (JSON)
-    $ffprobeCmd = "ffprobe -v error -show_entries stream=codec_type,codec_name,start_time,duration,sample_rate -show_entries format=duration -of json `"$InputPath`""
+    $ffprobeArgs = @(
+        "-v", "error",
+        "-show_entries", "stream=codec_type,codec_name,start_time,duration,sample_rate",
+        "-show_entries", "format=duration",
+        "-of", "json",
+        $InputPath
+    )
     
     try {
-        $jsonObj = Invoke-Expression $ffprobeCmd | ConvertFrom-Json
+        $ffprobeOutput = & ffprobe @ffprobeArgs
+        $ffprobeExitCode = $LASTEXITCODE
+        if ($ffprobeExitCode -ne 0) {
+            return @{ Text = "Error reading stream info (ffprobe exit $ffprobeExitCode)"; IsRisky = $false }
+        }
+
+        $jsonObj = ($ffprobeOutput -join [Environment]::NewLine) | ConvertFrom-Json -ErrorAction Stop
     } catch {
         return @{ Text = "Error reading stream info"; IsRisky = $false }
     }
@@ -284,7 +308,7 @@ function Show-LimitWidthMenu {
 
 function Invoke-FFmpegWithProgress {
     param(
-        [Parameter(Mandatory)][string[]]$Args,
+        [Parameter(Mandatory)][string[]]$FFmpegArgs,
         [Parameter(Mandatory)][double]$TotalSec
     )
 
@@ -294,7 +318,7 @@ function Invoke-FFmpegWithProgress {
     $speed = "?"
     $percent = 0
 
-    & ffmpeg @Args 2>&1 | ForEach-Object {
+    & ffmpeg @FFmpegArgs 2>&1 | ForEach-Object {
 
         $line = $_.ToString().Trim()
 
@@ -335,8 +359,10 @@ function Invoke-FFmpegWithProgress {
         # Αν θες να βλέπεις ffmpeg errors, άφησέ το έτσι (δεν τυπώνει τίποτα από μόνο του).
         # Οι γραμμές progress είναι αυτές που μας νοιάζουν.
     }
+    $ffmpegExitCode = $LASTEXITCODE
 
     $sw.Stop()
+    return $ffmpegExitCode
 }
 
 
@@ -368,6 +394,11 @@ if (-not $files) {
 $first = $files[0].FullName
 $vi = Get-VideoInfo $first
 $interlaceInfo = Get-InterlaceInfo $first
+
+if (-not $interlaceInfo.Succeeded) {
+    Write-Host "FFmpeg interlace analysis failed with exit code $($interlaceInfo.ExitCode)." -ForegroundColor Red
+    exit 1
+}
 
 # Avg bitrate for input (for UI only)
 $firstBr = ffprobe -v error -show_entries format=bit_rate `
@@ -580,6 +611,7 @@ if (-not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path 
 # PROCESS
 # ===============================
 $i = 0
+$encodeFailureCount = 0
 foreach ($f in $files) {
     $i++
     $input = $f.FullName
@@ -674,6 +706,12 @@ foreach ($f in $files) {
         Write-Host "Checking interlacing (idet)..." -ForegroundColor DarkGray
         $info = Get-InterlaceInfo $input
 
+        if (-not $info.Succeeded) {
+            Write-Host "ERROR: FFmpeg interlace analysis failed with exit code $($info.ExitCode)." -ForegroundColor Red
+            $encodeFailureCount++
+            continue
+        }
+
         if ($info.Interlaced) {
             Write-Host "✔ Needs deinterlacing ($($info.Field)) – using QTGMC" -ForegroundColor Green
             $useQTGMC = $true
@@ -687,6 +725,18 @@ foreach ($f in $files) {
     $durationSec = [double](ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$input")
     if (-not $durationSec -or $durationSec -le 0) { $durationSec = 0 }
 
+    # Remove an older output before starting so it can never be mistaken for this attempt's result.
+    if (Test-Path -LiteralPath $output) {
+        try {
+            Remove-Item -LiteralPath $output -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Host "ERROR: Existing output could not be replaced: $output" -ForegroundColor Red
+            $encodeFailureCount++
+            if ($avs -and (Test-Path -LiteralPath $avs)) { Remove-Item -LiteralPath $avs -Force }
+            continue
+        }
+    }
 
     if ($useQTGMC) {
 
@@ -710,7 +760,7 @@ foreach ($f in $files) {
             "$output"
         )
 
-        Invoke-FFmpegWithProgress -Args $ffArgs -TotalSec $durationSec
+        $ffmpegExitCode = Invoke-FFmpegWithProgress -FFmpegArgs $ffArgs -TotalSec $durationSec
     }
 
     else {
@@ -733,7 +783,16 @@ foreach ($f in $files) {
             "$output"
         )
 
-        Invoke-FFmpegWithProgress -Args $ffArgs -TotalSec $durationSec
+        $ffmpegExitCode = Invoke-FFmpegWithProgress -FFmpegArgs $ffArgs -TotalSec $durationSec
+    }
+
+    if ($ffmpegExitCode -ne 0) {
+        Write-Host ""
+        Write-Host "ERROR: FFmpeg encoding failed with exit code $ffmpegExitCode." -ForegroundColor Red
+        if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Force -ErrorAction SilentlyContinue }
+        if ($avs -and (Test-Path -LiteralPath $avs)) { Remove-Item -LiteralPath $avs -Force }
+        $encodeFailureCount++
+        continue
     }
 
     
@@ -742,18 +801,30 @@ foreach ($f in $files) {
     # ===============================
 
     # 🔸 FIX: LiteralPath
-    if (-not (Test-Path -LiteralPath $output)) {
+    if (-not (Test-Path -LiteralPath $output) -or (Get-Item -LiteralPath $output).Length -le 0) {
         Write-Host ""
-        Write-Host "ERROR: Output file was not created." -ForegroundColor Red
-        Write-Host "The encoding may have failed. Check ffmpeg/AviSynth installation." -ForegroundColor Yellow
+        Write-Host "ERROR: FFmpeg returned success but did not create a non-empty output file." -ForegroundColor Red
+        if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Force -ErrorAction SilentlyContinue }
         # 🔸 FIX: LiteralPath
         if ($avs -and (Test-Path -LiteralPath $avs)) { Remove-Item -LiteralPath $avs -Force }
+        $encodeFailureCount++
         continue
     }
 
-    $outRes = ffprobe -v error -select_streams v:0 `
+    $outRes = & ffprobe -v error -select_streams v:0 `
         -show_entries stream=width,height `
         -of csv=p=0 "$output"
+    $outputProbeExitCode = $LASTEXITCODE
+
+    if ($outputProbeExitCode -ne 0 -or -not $outRes) {
+        Write-Host ""
+        Write-Host "ERROR: Encoded output could not be validated by ffprobe (exit $outputProbeExitCode)." -ForegroundColor Red
+        Remove-Item -LiteralPath $output -Force -ErrorAction SilentlyContinue
+        if ($avs -and (Test-Path -LiteralPath $avs)) { Remove-Item -LiteralPath $avs -Force }
+        $encodeFailureCount++
+        continue
+    }
+
     $outRes = $outRes -replace ',', 'x'
 
 
@@ -781,6 +852,15 @@ foreach ($f in $files) {
 
     # 🔸 FIX: LiteralPath
     if ($avs -and (Test-Path -LiteralPath $avs)) { Remove-Item -LiteralPath $avs -Force }
+}
+
+if ($encodeFailureCount -gt 0) {
+    Write-Host "`nEncoding completed with $encodeFailureCount failure(s)." -ForegroundColor Red
+    if (-not $Batch -and -not $env:RUN_FROM_QUEUE) {
+        Write-Host ""
+        Read-Host "Press ENTER to close"
+    }
+    exit 1
 }
 
 if (-not $Batch -and -not $env:RUN_FROM_QUEUE) {

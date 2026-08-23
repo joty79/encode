@@ -10,6 +10,24 @@ $errorLog = Join-Path $queueDir "add_errors.log"
 $encoder = "D:\Users\joty79\scripts\encode\Video\video_encode.ps1"
 $settings = Join-Path $queueDir "batch_settings.json"
 
+function Set-QueueAfterEncoding {
+    param(
+        [Parameter(Mandatory)][string]$QueueFilePath,
+        [AllowEmptyCollection()][string[]]$FailedItems
+    )
+
+    if ($FailedItems.Count -gt 0) {
+        $FailedItems | Set-Content -LiteralPath $QueueFilePath -Encoding UTF8
+        return $false
+    }
+
+    if (Test-Path -LiteralPath $QueueFilePath) {
+        Remove-Item -LiteralPath $QueueFilePath -Force
+    }
+
+    return $true
+}
+
 # ===============================
 # DETECT CURRENT FOLDER
 # ===============================
@@ -363,6 +381,7 @@ $env:RUN_FROM_QUEUE = "1"
 # 🔸 FIX: Quotes around paths in execution call usually handled by pwsh parsing, 
 # but LiteralPath logic is inside the called script.
 & pwsh -NoProfile -ExecutionPolicy Bypass -File $encoder $firstItem
+$firstEncoderExitCode = $LASTEXITCODE
 
 # Verify settings were created
 if (-not (Test-Path -LiteralPath $settings)) {
@@ -377,6 +396,13 @@ if (-not (Test-Path -LiteralPath $settings)) {
 Write-Host ""
 Write-Host "=== Encoding queue ===" -ForegroundColor Cyan
 
+$failedItems = @()
+
+if ($firstEncoderExitCode -ne 0) {
+    $failedItems += $firstItem
+    Write-Host "First queue item failed with encoder exit code $firstEncoderExitCode." -ForegroundColor Red
+}
+
 for ($i = 1; $i -lt $validItems.Count; $i++) {
     $path = $validItems[$i]
 
@@ -384,22 +410,33 @@ for ($i = 1; $i -lt $validItems.Count; $i++) {
     Write-Host "[$($i + 1) / $($validItems.Count)] $path" -ForegroundColor Green
     Write-Host "Encoding..." -ForegroundColor Gray
 
-    if ($i -eq 0) {
-        # First item already ran once for UI, run again in batch mode
-        & pwsh -NoProfile -ExecutionPolicy Bypass -File $encoder $path -Batch
+    & pwsh -NoProfile -ExecutionPolicy Bypass -File $encoder $path -Batch
+    $encoderExitCode = $LASTEXITCODE
+
+    if ($encoderExitCode -ne 0) {
+        $failedItems += $path
+        Write-Host "Failed with encoder exit code $encoderExitCode. Retaining this queue item." -ForegroundColor Red
     }
     else {
-        & pwsh -NoProfile -ExecutionPolicy Bypass -File $encoder $path -Batch
+        Write-Host "Done." -ForegroundColor DarkGreen
     }
-
-    Write-Host "Done." -ForegroundColor DarkGreen
 }
 
 # ===============================
 # CLEANUP
 # ===============================
-if (Test-Path -LiteralPath $queueFile) { Remove-Item -LiteralPath $queueFile -Force }
 if (Test-Path -LiteralPath $settings) { Remove-Item -LiteralPath $settings -Force }
+
+$queueSucceeded = Set-QueueAfterEncoding -QueueFilePath $queueFile -FailedItems $failedItems
+
+if (-not $queueSucceeded) {
+    Write-Host ""
+    Write-Host "=== Queue completed with $($failedItems.Count) failure(s) ===" -ForegroundColor Red
+    Write-Host "Failed queue entries were retained for retry." -ForegroundColor Yellow
+    Read-Host "Press ENTER to close"
+    exit 1
+}
+
 if (Test-Path -LiteralPath $errorLog) { Remove-Item -LiteralPath $errorLog -Force }
 
 Write-Host ""
