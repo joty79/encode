@@ -18,6 +18,9 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - Do not track runtime queue state, logs, or machine-local generated archives.
 - After PowerShell script edits, run parser validation before runtime testing when command execution is allowed.
 - Preserve source `.ts` files by default during timestamp remux. Deletion requires explicit `-DeleteSource`, a clean FFmpeg verification with no warning/error output, and clean output timestamp checks; `-NoVerify` must block deletion.
+- Capture native executable exit status immediately. Tool launch, nonzero-exit, and invalid-output failures must remain failures and must never be reclassified as healthy media, no-audio media, or successful encoding.
+- Preserve failed video queue entries for retry and clear queue state only after every queued encode succeeds.
+- Media-moving helpers must refuse destination collisions instead of overwriting an existing file.
 
 ## Decisions
 

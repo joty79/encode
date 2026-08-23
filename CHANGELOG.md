@@ -6,6 +6,10 @@ All notable changes to this repo are recorded here.
 
 - Hardened `Video\Repair-TsTimestampRemux.ps1` source cleanup: source `.ts` files are now preserved by default, deletion requires explicit `-DeleteSource`, and deletion is blocked unless both timestamp checks and FFmpeg verification complete cleanly. `-DeleteSource -NoVerify` is rejected before processing.
 - Added focused source-cleanup contract tests and a synthetic end-to-end MPEG-TS smoke test.
+- Hardened `no_audio\Move-NoAudio.ps1`: ffprobe launch, nonzero-exit, and invalid-output failures now preserve the source, and moves refuse to overwrite an existing destination.
+- Hardened `Video\Verify-VideoIntegrity.ps1` and `Video\Detect-BadCuts.ps1`: native tool/input failures now return nonzero, retain diagnostics, and cannot report a healthy/success result. Replaced the invalid `Orange` console color with `DarkYellow`.
+- Hardened the legacy video encoder and queue: ffprobe now receives literal native arguments without `Invoke-Expression`, FFmpeg and child encoder exit codes are enforced, stale/partial failed outputs are rejected, and failed queue entries are retained for retry instead of clearing the entire queue.
+- Added deterministic safety suites for no-audio moves, video inspection failures, and video encoder/queue failure handling.
 
 ## 2026-07-04
 
