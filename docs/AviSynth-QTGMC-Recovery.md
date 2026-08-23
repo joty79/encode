@@ -77,6 +77,7 @@ Read-only inspection on 2026-08-23 found:
 - FFmpeg 9.0 is installed and was built with `--enable-avisynth`.
 - The preserved `E:` directory is therefore a payload/forensic source, not an active AviSynth installation.
 - `E:\Compilers\AviSynth+.rar` is a machine-local safety snapshot created after the Windows reinstall. It is intentionally not tracked by Git.
+- `docs\AviSynth-QTGMC-Preserved-Payload.sha256` records the SHA-256 hashes of the recovery evidence, core custom plugins, and safety archive as captured on 2026-08-23.
 
 Do not run the preserved `unins000.exe`; its uninstall metadata belongs to the previous Windows installation.
 
