@@ -28,11 +28,20 @@
 | OS | Windows 10/11 |
 | Shell | PowerShell 7 recommended |
 | Tools | Τα media scripts μπορεί να απαιτούν local tools όπως `ffmpeg`/`ffprobe`, ανάλογα με το script. |
+| Interlaced video | Το legacy QTGMC path απαιτεί σωστά registered AviSynth+ και τα preserved x64 QTGMC plugins. Δες `docs/AviSynth-QTGMC-Recovery.md`. |
 | Registry | Τα `.reg` files αλλάζουν Windows Explorer context menus και θέλουν προσεκτικό review πριν από import. |
 
 ## Usage
 
 Τα scripts είναι legacy και αρκετά από αυτά έχουν δικό τους `.reg` companion για Explorer context menus.
+
+Πριν από εγκατάσταση σε νέο Windows environment, τρέξε το non-mutating preflight και συμβουλέψου το recovery plan:
+
+```powershell
+pwsh -File '.\tools\Test-EncodeEnvironment.ps1'
+```
+
+Το command επιστρέφει exit code `1` όταν λείπει required dependency, αλλά δεν εγκαθιστά και δεν αλλάζει τίποτα. Η ανακατασκευή του known-good AviSynth+/QTGMC environment βρίσκεται στο `docs/AviSynth-QTGMC-Recovery.md` και το συνολικό project plan στο `docs/Re-Onboarding-Plan.md`.
 
 Για terminal χρήση, τρέξε πρώτα ένα script με `-?` ή άνοιξέ το για να ελέγξεις parameters και hardcoded paths.
 
@@ -87,6 +96,8 @@ encode/
 |-- subtitle/    # Subtitle extraction/conversion helpers
 |-- icons/       # Icon extraction/conversion helpers
 |-- no_audio/    # No-audio media helper
+|-- docs/        # Recovery evidence and re-onboarding plan
+|-- tools/       # Non-mutating environment checks
 |-- .gitignore   # Runtime/generated files ignored by Git
 |-- CHANGELOG.md # Repo-level change history
 |-- README.md    # Project overview

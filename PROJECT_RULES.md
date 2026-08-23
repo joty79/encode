@@ -7,6 +7,9 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - This repo owns legacy PowerShell media helper scripts under `Video/`, `audio/`, `subtitle/`, `icons/`, and `no_audio/`.
 - Treat `.ps1` files as script logic and `.reg` files as Windows Explorer context-menu integration artifacts.
 - Preserve existing behavior unless a change is explicitly requested.
+- Treat the established encode/audio/queue workflows as a known-good legacy core; restore and characterize them before modernization.
+- Treat the video-integrity and TS timestamp/repair tooling added in `fb33b0d` as a newer diagnostic layer that requires independent validation.
+- The known-good interlaced-video path uses FFmpeg `idet`, AviSynth+ 3.7.5 x64, FFMS2, and QTGMC; `docs/AviSynth-QTGMC-Recovery.md` owns its recovery evidence.
 
 ## Guardrails
 
