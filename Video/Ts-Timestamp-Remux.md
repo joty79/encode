@@ -91,7 +91,16 @@ By default the repaired file is written as:
 <source folder>\_TS_FIXED_MP4\<same base name>.mp4
 ```
 
-After the MP4 is created and verification passes, the source `.ts` is deleted. For manual testing where the `.ts` should remain, add `-KeepSource`.
+The source `.ts` is kept by default, including context-menu runs. Source deletion is an explicit terminal opt-in:
+
+```powershell
+pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' `
+  -Path 'D:\Users\joty79\Desktop\1.ts' `
+  -SkipInputAnalysis `
+  -DeleteSource
+```
+
+Even with `-DeleteSource`, deletion is allowed only after FFmpeg verification returns cleanly with no warning/error output and the output timestamp checks are clean. `-DeleteSource` cannot be combined with `-NoVerify`. The older `-KeepSource` switch remains accepted for explicit automation and compatibility, but it now matches the default behavior.
 
 Fast routine repair without pre-scanning the input:
 
@@ -151,7 +160,7 @@ Scan TS folder for problems
 Fix TS -> MP4 in folder (No re-encode)
 ```
 
-The fix actions write MP4 files into `_TS_FIXED_MP4` using the original base name with only the extension changed to `.mp4`. When each file verifies successfully, its source `.ts` is deleted.
+The fix actions write MP4 files into `_TS_FIXED_MP4` using the original base name with only the extension changed to `.mp4`. Context-menu runs keep each source `.ts`. Terminal runs may opt into post-verification deletion with `-DeleteSource`.
 
 The scan action displays every `.ts` file with an `OK`, `WARN`, or `PROBLEM` status. `PROBLEM` means hard timestamp issues such as tiny/duplicate PTS/DTS or backwards timestamps; those files are moved into `_TS_TIMESTAMP_PROBLEMS`.
 It also treats heavy video cadence jitter as `PROBLEM`, because `2.ts` proved that monotonic timestamps can still fail strict Avidemux direct MP4 save.
@@ -162,7 +171,8 @@ It also treats heavy video cadence jitter as `PROBLEM`, because `2.ts` proved th
 |-------|------|
 | Real broadcast gaps remain | Large missing-time gaps are real discontinuities and cannot disappear without changing timeline/content. |
 | Cadence jitter is an Avidemux-risk signal | A file may have no backwards/duplicate timestamps and still fail direct TS-to-MP4 save in Avidemux. |
-| Source deletion is post-success only | The `.ts` source is deleted only after the no-reencode MP4 is created and verification does not fail. |
+| Source preservation is the default | The `.ts` source remains unless `-DeleteSource` was explicitly supplied. Deletion additionally requires clean timestamp checks and FFmpeg verification with no warning/error output. |
+| `-NoVerify` blocks deletion | `-DeleteSource -NoVerify` is rejected before media processing starts. |
 | Not visual repair | This does not fix corrupted frames like the `3.mp4` case. |
 | Avidemux/GUI still matters | Packet checks can look clean, but final acceptance is opening/seeking in the target player/editor. |
 | Re-encode is last resort | If timestamps still fail after copy remux + setts, only then consider re-encoding affected sections. |

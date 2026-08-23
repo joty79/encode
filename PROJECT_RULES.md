@@ -17,8 +17,17 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - Review `.reg` files carefully before import or edits, especially absolute script paths and wildcard registry keys.
 - Do not track runtime queue state, logs, or machine-local generated archives.
 - After PowerShell script edits, run parser validation before runtime testing when command execution is allowed.
+- Preserve source `.ts` files by default during timestamp remux. Deletion requires explicit `-DeleteSource`, a clean FFmpeg verification with no warning/error output, and clean output timestamp checks; `-NoVerify` must block deletion.
 
 ## Decisions
+
+### 2026-08-24 - TS source deletion requires explicit verified opt-in
+
+- Date: 2026-08-24
+- Problem: The previous default deleted each source `.ts` after a nominally successful remux, even when timestamp warnings remained or verification was skipped.
+- Guardrail/rule: Keep source `.ts` files by default. Allow deletion only through explicit `-DeleteSource` after clean timestamp checks and clean FFmpeg verification. Reject `-DeleteSource -NoVerify` before processing. Keep `-KeepSource` as a compatibility/automation signal, but never make source deletion implicit.
+- Files affected: `Video/Repair-TsTimestampRemux.ps1`, `Video/lib/TsSourceCleanup.ps1`, `tests/Test-RepairTsTimestampRemuxSafety.ps1`, `tests/Test-RepairTsTimestampRemuxSmoke.ps1`, `Video/Ts-Timestamp-Remux.md`, `README.md`, `CHANGELOG.md`, `PROJECT_RULES.md`
+- Validation/tests run: Parser validation passed for all changed PowerShell sources. Focused cleanup tests covered default preservation, unsafe option rejection, verification failure, remaining timestamp warnings, and explicit verified deletion. Synthetic MPEG-TS end-to-end smoke preserved the default source, deleted only with `-DeleteSource`, and rejected `-DeleteSource -NoVerify` without changing the source.
 
 ### 2026-07-04 - MPEG-TS timestamp remux repair
 
@@ -38,12 +47,12 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - Files affected: `Video/Repair-Mp4DisguisedTs.ps1`, `Video/Repair-TsTimestampRemux.ps1`, `Video/Ts-Timestamp-Remux.md`, `README.md`, `CHANGELOG.md`, `PROJECT_RULES.md`
 - Validation/tests run: Parser validation passed. Synthetic real MP4 smoke stopped without output. `D:\Users\joty79\Desktop\1.mp4` repaired to a temp MP4 with no re-encode. The `setts` variant passed copy verification but stretched video duration to about `2039s`; the no-`setts` variant preserved about `1701s` audio/video duration and passed copy-mode verification while preserving the source file.
 
-### 2026-07-04 - TS fix output folder and source cleanup
+### 2026-07-04 - TS fix output folder and source cleanup (source-deletion policy superseded 2026-08-24)
 
 - Date: 2026-07-04
 - Problem: Folder fix was producing MP4 files alongside source `.ts` files and adding extra suffixes, making bulk cleanup awkward after successful TS-to-MP4 remux.
 - Root cause: The original default output path was `<name>_fixed_no_reencode.mp4` in the source folder and the script preserved the source `.ts`.
-- Guardrail/rule: Default TS fix output should be `_TS_FIXED_MP4\<same base name>.mp4`. After successful remux and verification, delete the source `.ts`. Keep `-KeepSource` available for manual test runs where deletion is not wanted.
+- Historical rule: Default TS fix output should be `_TS_FIXED_MP4\<same base name>.mp4`. The automatic source-deletion part of this decision is superseded by the 2026-08-24 explicit verified opt-in rule above.
 - Files affected: `Video/Repair-TsTimestampRemux.ps1`, `Video/Ts-Timestamp-Remux.md`, `README.md`, `CHANGELOG.md`, `PROJECT_RULES.md`
 - Validation/tests run: Parser validation passed. Synthetic single-file smoke wrote `_TS_FIXED_MP4\single.mp4` and deleted `single.ts` after verification. Synthetic folder smoke wrote `_TS_FIXED_MP4\a.mp4` and `_TS_FIXED_MP4\b.mp4`, deleted both source `.ts` files after verification, and completed with zero failures.
 

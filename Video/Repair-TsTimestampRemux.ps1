@@ -33,6 +33,9 @@ param(
     [switch]$KeepSource,
 
     [Parameter()]
+    [switch]$DeleteSource,
+
+    [Parameter()]
     [switch]$KeepTemp,
 
     [Parameter()]
@@ -123,6 +126,8 @@ function Write-Bad {
     Write-Host ('❌ {0}' -f $Text) -ForegroundColor Red
 }
 
+. (Join-Path -Path $PSScriptRoot -ChildPath 'lib\TsSourceCleanup.ps1')
+
 function Format-Seconds {
     param(
         [Parameter(Mandatory = $true)]
@@ -156,6 +161,39 @@ function Invoke-NativeChecked {
     if ($LASTEXITCODE -ne 0) {
         throw "$Label failed with exit code $LASTEXITCODE."
     }
+}
+
+function Invoke-NativeVerificationChecked {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Exe,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$CommandArgs,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Label
+    )
+
+    Write-Step $Label
+    Write-Host ('  {0} {1}' -f $Exe, ($CommandArgs -join ' '))
+
+    $verificationOutput = @(& $Exe @CommandArgs 2>&1)
+    $verificationExitCode = $LASTEXITCODE
+    foreach ($line in $verificationOutput) {
+        Write-Host ('  {0}' -f $line)
+    }
+
+    if ($verificationExitCode -ne 0) {
+        throw "$Label failed with exit code $verificationExitCode."
+    }
+
+    if ($verificationOutput.Count -gt 0) {
+        Write-Warn 'Verification completed but FFmpeg reported warning/error output.'
+        return $false
+    }
+
+    return $true
 }
 
 function Get-MediaSummary {
@@ -572,40 +610,6 @@ function Get-DefaultOutputPath {
     return (Join-Path -Path $outputDirectory -ChildPath ($baseName + '.mp4'))
 }
 
-function Remove-SourceTsAfterSuccess {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$InputPath,
-
-        [Parameter(Mandatory = $true)]
-        [string]$OutputPath
-    )
-
-    if ($KeepSource) {
-        Write-Warn 'Source file kept because -KeepSource was used.'
-        return
-    }
-
-    if ([IO.Path]::GetExtension($InputPath) -ne '.ts') {
-        Write-Warn ('Source was not deleted because it is not a .ts file: {0}' -f $InputPath)
-        return
-    }
-
-    $resolvedInput = (Resolve-Path -LiteralPath $InputPath).Path
-    $resolvedOutput = (Resolve-Path -LiteralPath $OutputPath).Path
-    if ([string]::Equals($resolvedInput, $resolvedOutput, [StringComparison]::OrdinalIgnoreCase)) {
-        throw 'Refusing to delete source because input and output resolved to the same path.'
-    }
-
-    $outputItem = Get-Item -LiteralPath $resolvedOutput
-    if ($outputItem.Length -le 0) {
-        throw "Refusing to delete source because output is empty: $resolvedOutput"
-    }
-
-    Remove-Item -LiteralPath $resolvedInput -Force
-    Write-Host ('🗑️  Deleted source TS after successful fix: {0}' -f $resolvedInput) -ForegroundColor DarkGray
-}
-
 function Invoke-TsTimestampRemux {
     param(
         [Parameter(Mandatory = $true)]
@@ -727,8 +731,9 @@ function Invoke-TsTimestampRemux {
     $outputStats = @(Get-TimestampStats -Ffprobe $Ffprobe -InputPath $resolvedOutputPath)
     Write-TimestampStats -Title 'Output timestamp diagnosis:' -Stats $outputStats
 
+    $verificationPassed = $false
     if (-not $NoVerify) {
-        Invoke-NativeChecked -Exe $Ffmpeg -Label 'Verification: copy-mode remux read' -CommandArgs @(
+        $verificationPassed = Invoke-NativeVerificationChecked -Exe $Ffmpeg -Label 'Verification: copy-mode remux read' -CommandArgs @(
             '-hide_banner',
             '-v', 'warning',
             '-i', $resolvedOutputPath,
@@ -737,15 +742,24 @@ function Invoke-TsTimestampRemux {
             '-f', 'null',
             '-'
         )
+    } else {
+        Write-Warn 'Output verification was skipped because -NoVerify was used. Source deletion is disabled.'
     }
 
-    if (Test-StatsCleanForMuxing -Stats $outputStats) {
+    $timestampStatsClean = Test-StatsCleanForMuxing -Stats $outputStats
+    if ($timestampStatsClean) {
         Write-Ok 'Result: output has no backwards or tiny duplicate PTS/DTS packets.'
     } else {
         Write-Warn 'Result: output was created, but timestamp warnings remain. Try without -SkipSettsRepair, or re-encode as a last resort.'
     }
 
-    Remove-SourceTsAfterSuccess -InputPath $resolvedInputPath -OutputPath $resolvedOutputPath
+    [void](Remove-SourceTsAfterSuccess `
+        -InputPath $resolvedInputPath `
+        -OutputPath $resolvedOutputPath `
+        -KeepSource:$KeepSource `
+        -DeleteSource:$DeleteSource `
+        -VerificationPassed:$verificationPassed `
+        -TimestampStatsClean:$timestampStatsClean)
 }
 
 function Invoke-FolderTimestampScan {
@@ -816,6 +830,8 @@ function Invoke-FolderTimestampScan {
         exit 1
     }
 }
+
+Assert-SourceCleanupRequest -KeepSource:$KeepSource -DeleteSource:$DeleteSource -NoVerify:$NoVerify
 
 $ffmpeg = Resolve-RequiredCommand -Name 'ffmpeg'
 $ffprobe = Resolve-RequiredCommand -Name 'ffprobe'

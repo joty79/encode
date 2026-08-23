@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to this repo are recorded here.
+
+## 2026-08-24
+
+- Hardened `Video\Repair-TsTimestampRemux.ps1` source cleanup: source `.ts` files are now preserved by default, deletion requires explicit `-DeleteSource`, and deletion is blocked unless both timestamp checks and FFmpeg verification complete cleanly. `-DeleteSource -NoVerify` is rejected before processing.
+- Added focused source-cleanup contract tests and a synthetic end-to-end MPEG-TS smoke test.
+
 ## 2026-07-04
 
 - Added `Video\Repair-Mp4DisguisedTs.ps1`, a terminal-only helper that repairs `.mp4` files whose real container is MPEG-TS while refusing to touch normal MP4/MOV containers. It skips `setts` by default to preserve duration on MP4-named TS files.
