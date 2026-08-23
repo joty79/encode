@@ -37,7 +37,16 @@ param(
     [double]$SceneThreshold = 0.12
 )
 
-$resolvedPath = (Resolve-Path $Path).Path
+$resolvedPath = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).Path
+if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
+    throw "Input path is not a file: $resolvedPath"
+}
+
+try {
+    $ffprobePath = (Get-Command ffprobe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+} catch {
+    throw "ffprobe was not found on PATH. $($_.Exception.Message)"
+}
 
 # Helper function to parse time formats (HH:MM:SS, MM:SS, or seconds)
 function Convert-TimeToSeconds ([string]$timeStr) {
@@ -67,7 +76,16 @@ if ($Cuts -and $Cuts.Count -gt 0) {
     Write-Host "🔸 Fetching keyframe list (Instant)..." -ForegroundColor Gray
 
     # Fetch all keyframe timestamps instantly (demux only, no decoding)
-    $keyframesOutput = ffprobe -loglevel error -select_streams v:0 -skip_frame nokey -show_entries frame=pts_time -of csv=print_section=0 $resolvedPath
+    $keyframesOutput = & $ffprobePath -loglevel error -select_streams v:0 -skip_frame nokey -show_entries frame=pts_time -of csv=print_section=0 $resolvedPath 2>&1
+    $ffprobeExitCode = $LASTEXITCODE
+    if ($ffprobeExitCode -ne 0) {
+        Write-Host "❌ ffprobe failed with exit code $ffprobeExitCode. Diagnostic output:" -ForegroundColor Red
+        $keyframesOutput | ForEach-Object {
+            Write-Host "  $_" -ForegroundColor DarkYellow
+        }
+        throw "Cut alignment check failed because ffprobe exited with code $ffprobeExitCode."
+    }
+
     $keyframes = [System.Collections.Generic.List[double]]::new()
 
     foreach ($kf in $keyframesOutput) {
@@ -135,11 +153,27 @@ Write-Host "🔍 Initializing video scan: $resolvedPath" -ForegroundColor Cyan
 
 # Fetch metadata
 $totalFrames = 0
-$totalFramesInfo = ffprobe -loglevel error -select_streams v:0 -show_entries stream=nb_frames -of default=noprint_wrappers=1:nokey=1 $resolvedPath
+$totalFramesInfo = & $ffprobePath -loglevel error -select_streams v:0 -show_entries stream=nb_frames -of default=noprint_wrappers=1:nokey=1 $resolvedPath 2>&1
+$ffprobeExitCode = $LASTEXITCODE
+if ($ffprobeExitCode -ne 0) {
+    Write-Host "❌ ffprobe failed while reading frame metadata (exit code $ffprobeExitCode). Diagnostic output:" -ForegroundColor Red
+    $totalFramesInfo | ForEach-Object {
+        Write-Host "  $_" -ForegroundColor DarkYellow
+    }
+    throw "Video scan failed because ffprobe exited with code $ffprobeExitCode."
+}
 [int]::TryParse($totalFramesInfo, [ref]$totalFrames) | Out-Null
 
 $duration = 0.0
-$durationInfo = ffprobe -loglevel error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $resolvedPath
+$durationInfo = & $ffprobePath -loglevel error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $resolvedPath 2>&1
+$ffprobeExitCode = $LASTEXITCODE
+if ($ffprobeExitCode -ne 0) {
+    Write-Host "❌ ffprobe failed while reading duration metadata (exit code $ffprobeExitCode). Diagnostic output:" -ForegroundColor Red
+    $durationInfo | ForEach-Object {
+        Write-Host "  $_" -ForegroundColor DarkYellow
+    }
+    throw "Video scan failed because ffprobe exited with code $ffprobeExitCode."
+}
 [double]::TryParse($durationInfo, [ref]$duration) | Out-Null
 
 Write-Host "📊 Duration: $duration s | Est. Frames: $totalFrames" -ForegroundColor Gray
@@ -153,8 +187,14 @@ if ($UseGPU) {
 $escapedPath = $resolvedPath.Replace(':', '\:').Replace('\', '/')
 $ffmpegArgs = $hwaccelArgs + @("-i", "`"$resolvedPath`"", "-vf", "select=gt(scene\,$SceneThreshold),showinfo", "-f", "null", "-")
 
+try {
+    $ffmpegPath = (Get-Command ffmpeg -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+} catch {
+    throw "ffmpeg was not found on PATH. $($_.Exception.Message)"
+}
+
 $processStartInfo = [System.Diagnostics.ProcessStartInfo]::new()
-$processStartInfo.FileName = "ffmpeg"
+$processStartInfo.FileName = $ffmpegPath
 $processStartInfo.Arguments = $ffmpegArgs -join " "
 $processStartInfo.RedirectStandardError = $true
 $processStartInfo.UseShellExecute = $false
@@ -162,16 +202,22 @@ $processStartInfo.CreateNoWindow = $true
 
 Write-Host "🎬 Decoding stream and scanning for bad cuts in real-time..." -ForegroundColor Cyan
 
-$process = [System.Diagnostics.Process]::Start($processStartInfo)
+try {
+    $process = [System.Diagnostics.Process]::Start($processStartInfo)
+} catch {
+    throw "Failed to start ffmpeg: $($_.Exception.Message)"
+}
 $reader = $process.StandardError
 
 $badCuts = [System.Collections.Generic.List[PSObject]]::new()
 $decodeErrors = [System.Collections.Generic.List[string]]::new()
+$stderrLines = [System.Collections.Generic.List[string]]::new()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 while (-not $reader.EndOfStream) {
     $line = $reader.ReadLine()
     if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    $stderrLines.Add($line)
 
     if ($line -match "Parsed_showinfo") {
         $pts = 0.0
@@ -227,7 +273,7 @@ while (-not $reader.EndOfStream) {
 
             if (-not $isIgnore) {
                 Write-Progress -Activity "Scanning Video for Bad Cuts" -Completed
-                Write-Host "⚠️ Decoding Warning/Error: $line" -ForegroundColor Orange
+                Write-Host "⚠️ Decoding Warning/Error: $line" -ForegroundColor DarkYellow
                 $decodeErrors.Add($line)
             }
         }
@@ -235,8 +281,17 @@ while (-not $reader.EndOfStream) {
 }
 
 $process.WaitForExit()
+$ffmpegExitCode = $process.ExitCode
 $stopwatch.Stop()
 Write-Progress -Activity "Scanning Video for Bad Cuts" -Completed
+
+if ($ffmpegExitCode -ne 0) {
+    Write-Host "`n❌ ffmpeg scan failed with exit code $ffmpegExitCode. Diagnostic output:" -ForegroundColor Red
+    $stderrLines | Select-Object -Unique | ForEach-Object {
+        Write-Host "  $_" -ForegroundColor DarkYellow
+    }
+    throw "Bad-cut scan failed because ffmpeg exited with code $ffmpegExitCode."
+}
 
 Write-Host "`n📊 Scan Summary for: $(Split-Path $resolvedPath -Leaf)" -ForegroundColor Cyan
 Write-Host "🔸 Processing Time: $([math]::Round($stopwatch.Elapsed.TotalSeconds, 2)) seconds" -ForegroundColor Gray
@@ -252,7 +307,7 @@ if ($badCuts.Count -eq 0 -and $decodeErrors.Count -eq 0) {
     }
 
     if ($decodeErrors.Count -gt 0) {
-        Write-Host "`n⚠️ Found $($decodeErrors.Count) minor bitstream warnings/errors:" -ForegroundColor Orange
+        Write-Host "`n⚠️ Found $($decodeErrors.Count) minor bitstream warnings/errors:" -ForegroundColor DarkYellow
         $decodeErrors | Select-Object -Unique | ForEach-Object {
             Write-Host "  $_" -ForegroundColor DarkYellow
         }
