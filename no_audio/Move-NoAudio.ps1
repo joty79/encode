@@ -13,7 +13,7 @@ if (-not (Test-Path -LiteralPath $TargetDirectory)) {
 }
 
 # Εύρεση αρχείων βίντεο στον επιλεγμένο φάκελο
-$files = Get-ChildItem -LiteralPath $TargetDirectory -File | Where-Object { $videoExtensions -contains $_.Extension.ToLower() }
+$files = @(Get-ChildItem -LiteralPath $TargetDirectory -File | Where-Object { $videoExtensions -contains $_.Extension.ToLower() })
 
 if ($files.Count -eq 0) {
     Write-Host "Δεν βρέθηκαν αρχεία βίντεο."
@@ -21,8 +21,6 @@ if ($files.Count -eq 0) {
 }
 
 foreach ($file in $files) {
-    $hasAudio = $false
-    
     # Ορίσματα για το ffprobe
     $ffprobeArgs = @(
         "-v", "error",
@@ -32,14 +30,34 @@ foreach ($file in $files) {
         $file.FullName
     )
     
-    # Εκτέλεση ffprobe και λήψη του αποτελέσματος
-    $output = & ffprobe @ffprobeArgs 2>&1
-    
-    # Αν το output περιέχει "audio", τότε υπάρχει ροή ήχου
-    if ($output -is [array]) { $output = $output -join "" }
-    if (-not [string]::IsNullOrWhiteSpace($output) -and $output.ToString().Trim() -eq "audio") {
-        $hasAudio = $true
+    # Εκτέλεση ffprobe και λήψη του αποτελέσματος. Αποτυχία probing δεν
+    # ισοδυναμεί με αρχείο χωρίς ήχο, οπότε σε κάθε αβέβαιο αποτέλεσμα
+    # αφήνουμε το αρχείο ανέγγιχτο.
+    try {
+        $output = & ffprobe @ffprobeArgs 2>&1
+        $ffprobeExitCode = $LASTEXITCODE
     }
+    catch {
+        Write-Error "Αποτυχία εκκίνησης ffprobe για '$($file.Name)': $($_.Exception.Message). Το αρχείο δεν μετακινήθηκε."
+        continue
+    }
+
+    if ($ffprobeExitCode -ne 0) {
+        $errorText = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+        Write-Error "Το ffprobe απέτυχε για '$($file.Name)' με exit code $ffprobeExitCode. $($errorText.Trim()) Το αρχείο δεν μετακινήθηκε."
+        continue
+    }
+
+    $outputText = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+    $outputText = $outputText.Trim()
+
+    if (-not [string]::IsNullOrEmpty($outputText) -and
+        -not [string]::Equals($outputText, "audio", [StringComparison]::Ordinal)) {
+        Write-Error "Το ffprobe επέστρεψε μη αναμενόμενο αποτέλεσμα για '$($file.Name)': '$outputText'. Το αρχείο δεν μετακινήθηκε."
+        continue
+    }
+
+    $hasAudio = [string]::Equals($outputText, "audio", [StringComparison]::Ordinal)
     
     if (-not $hasAudio) {
         Write-Host "🔸 Μετακίνηση (Χωρίς Ήχο): $($file.Name)" -ForegroundColor Yellow
@@ -52,7 +70,18 @@ foreach ($file in $files) {
         }
         
         $destination = Join-Path -Path $noAudioPath -ChildPath $file.Name
-        Move-Item -LiteralPath $file.FullName -Destination $destination -Force
+
+        if (Test-Path -LiteralPath $destination) {
+            Write-Error "Ο προορισμός υπάρχει ήδη και δεν θα αντικατασταθεί: $destination. Το αρχείο δεν μετακινήθηκε."
+            continue
+        }
+
+        try {
+            Move-Item -LiteralPath $file.FullName -Destination $destination -ErrorAction Stop
+        }
+        catch {
+            Write-Error "Αποτυχία μετακίνησης του '$($file.Name)': $($_.Exception.Message)"
+        }
     } else {
         Write-Host "✅ Έχει Ήχο: $($file.Name)" -ForegroundColor Green
     }
