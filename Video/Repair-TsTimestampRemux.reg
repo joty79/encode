@@ -19,7 +19,7 @@ Windows Registry Editor Version 5.00
 ; Shift-only folder tools for all top-level .ts files in a folder
 
 [HKEY_CURRENT_USER\Software\Classes\Directory\shell\AnalyzeTsTimestamps]
-@="Scan TS folder for problems"
+@="Scan and move problem TS files"
 "Icon"="D:\\Users\\joty79\\Documents\\Icons\\MediaInfo.ico"
 "Extended"=""
 
@@ -37,7 +37,7 @@ Windows Registry Editor Version 5.00
 ; Shift-only folder-background tools for the current folder
 
 [HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\AnalyzeTsTimestamps]
-@="Scan TS folder for problems"
+@="Scan and move problem TS files"
 "Icon"="D:\\Users\\joty79\\Documents\\Icons\\MediaInfo.ico"
 "Extended"=""
 

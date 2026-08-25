@@ -283,6 +283,7 @@ function Get-TimestampStats {
     $process = [System.Diagnostics.Process]::Start($processInfo)
     $previousByStream = @{}
     $statsByStream = @{}
+    $ptsSamplesByStream = @{}
 
     while (($line = $process.StandardOutput.ReadLine()) -ne $null) {
         if ([string]::IsNullOrWhiteSpace($line)) {
@@ -304,47 +305,84 @@ function Get-TimestampStats {
         if (-not [double]::TryParse($parts[1], $style, $culture, [ref]$pts)) {
             continue
         }
-        [void][double]::TryParse($parts[2], $style, $culture, [ref]$dts)
+        $hasDts = [double]::TryParse($parts[2], $style, $culture, [ref]$dts)
         [void][double]::TryParse($parts[3], $style, $culture, [ref]$duration)
 
         if (-not $statsByStream.ContainsKey($streamIndex)) {
             $statsByStream[$streamIndex] = New-StreamStat -StreamIndex $streamIndex -FirstPts $pts
+            $ptsSamplesByStream[$streamIndex] = New-Object System.Collections.Generic.List[object]
         }
 
         $stat = $statsByStream[$streamIndex]
         $stat.Packets++
+        $ptsSamplesByStream[$streamIndex].Add([pscustomobject]@{
+            Pts = $pts
+            Duration = $duration
+        }) | Out-Null
 
-        if ($previousByStream.ContainsKey($streamIndex)) {
+        if ($hasDts -and $previousByStream.ContainsKey($streamIndex)) {
             $previous = $previousByStream[$streamIndex]
-            $ptsDelta = $pts - $previous.Pts
             $dtsDelta = $dts - $previous.Dts
-            $expectedDuration = if ($duration -gt 0) { $duration } else { 0.033367 }
-
-            if ($ptsDelta -lt 0) {
-                $stat.PtsBackwards++
-            }
             if ($dtsDelta -lt 0) {
                 $stat.DtsBackwards++
-            }
-            if ([Math]::Abs($ptsDelta) -lt 0.0005) {
-                $stat.TinyPts++
             }
             if ([Math]::Abs($dtsDelta) -lt 0.0005) {
                 $stat.TinyDts++
             }
-            if ($ptsDelta -gt 0.0005) {
-                if ($ptsDelta -lt $stat.MinDeltaSeconds) {
-                    $stat.MinDeltaSeconds = $ptsDelta
-                }
-                if ($ptsDelta -gt $stat.MaxDeltaSeconds) {
-                    $stat.MaxDeltaSeconds = $ptsDelta
-                }
-                if ($ptsDelta -lt ($expectedDuration - 0.0005)) {
-                    $stat.CadenceShort++
-                }
-                elseif (($ptsDelta -gt ($expectedDuration + 0.0005)) -and ($ptsDelta -le 0.20)) {
-                    $stat.CadenceLong++
-                }
+        }
+
+        if ($hasDts) {
+            $previousByStream[$streamIndex] = [pscustomobject]@{
+                Dts = $dts
+            }
+        }
+    }
+
+    $process.WaitForExit()
+    $stderr = $process.StandardError.ReadToEnd()
+    if ($process.ExitCode -ne 0) {
+        throw "ffprobe packet scan failed for '$InputPath'. $stderr"
+    }
+
+    # ffprobe emits packets in decode/demux order. H.264 B-frames therefore
+    # commonly have PTS values that go backwards even when the media is healthy.
+    # Analyze PTS cadence in presentation order; keep DTS checks in packet order.
+    foreach ($streamIndex in $ptsSamplesByStream.Keys) {
+        $stat = $statsByStream[$streamIndex]
+        $orderedSamples = @($ptsSamplesByStream[$streamIndex] | Sort-Object Pts)
+        if ($orderedSamples.Count -eq 0) {
+            continue
+        }
+
+        $stat.FirstPts = $orderedSamples[0].Pts
+        $stat.LastPts = $orderedSamples[$orderedSamples.Count - 1].Pts
+        for ($sampleIndex = 1; $sampleIndex -lt $orderedSamples.Count; $sampleIndex++) {
+            $previousSample = $orderedSamples[$sampleIndex - 1]
+            $sample = $orderedSamples[$sampleIndex]
+            $ptsDelta = $sample.Pts - $previousSample.Pts
+            $expectedDuration = if ($sample.Duration -gt 0) {
+                $sample.Duration
+            } elseif ($previousSample.Duration -gt 0) {
+                $previousSample.Duration
+            } else {
+                0.033367
+            }
+
+            if ([Math]::Abs($ptsDelta) -lt 0.0005) {
+                $stat.TinyPts++
+                continue
+            }
+            if ($ptsDelta -lt $stat.MinDeltaSeconds) {
+                $stat.MinDeltaSeconds = $ptsDelta
+            }
+            if ($ptsDelta -gt $stat.MaxDeltaSeconds) {
+                $stat.MaxDeltaSeconds = $ptsDelta
+            }
+            if ($ptsDelta -lt ($expectedDuration - 0.0005)) {
+                $stat.CadenceShort++
+            }
+            elseif (($ptsDelta -gt ($expectedDuration + 0.0005)) -and ($ptsDelta -le 0.20)) {
+                $stat.CadenceLong++
             }
             if ($ptsDelta -gt [Math]::Max(0.20, $expectedDuration * 4.0)) {
                 $stat.Gaps++
@@ -354,18 +392,6 @@ function Get-TimestampStats {
                 }
             }
         }
-
-        $stat.LastPts = $pts
-        $previousByStream[$streamIndex] = [pscustomobject]@{
-            Pts = $pts
-            Dts = $dts
-        }
-    }
-
-    $process.WaitForExit()
-    $stderr = $process.StandardError.ReadToEnd()
-    if ($process.ExitCode -ne 0) {
-        throw "ffprobe packet scan failed for '$InputPath'. $stderr"
     }
 
     $result = New-Object System.Collections.Generic.List[object]
@@ -632,6 +658,9 @@ function Invoke-TsTimestampRemux {
     if ([string]::Equals($resolvedInputPath, $resolvedOutputPath, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Input and output paths cannot be the same.'
     }
+    if (Test-Path -LiteralPath $resolvedOutputPath) {
+        throw "Output already exists; nothing was overwritten: $resolvedOutputPath"
+    }
 
     $outputDirectory = [IO.Path]::GetDirectoryName($resolvedOutputPath)
     if (-not (Test-Path -LiteralPath $outputDirectory)) {
@@ -682,15 +711,18 @@ function Invoke-TsTimestampRemux {
         Write-Warn 'Input timestamp diagnosis skipped for faster remux.'
     }
 
-    $tempName = ([IO.Path]::GetFileNameWithoutExtension($resolvedOutputPath) + '.stage.mkv')
+    $tempName = '{0}.{1}.stage.mkv' -f `
+        [IO.Path]::GetFileNameWithoutExtension($resolvedOutputPath), `
+        [guid]::NewGuid().ToString('N')
     $tempPath = Join-Path -Path $resolvedTempDirectory -ChildPath $tempName
+    $keepOutput = $false
 
     try {
         Invoke-NativeChecked -Exe $Ffmpeg -Label 'Stage 1/2: TS/container to MKV copy remux' -CommandArgs @(
             '-hide_banner',
             '-loglevel', 'error',
             '-stats',
-            '-y',
+            '-n',
             '-i', $resolvedInputPath,
             '-map', '0',
             '-c', 'copy',
@@ -701,7 +733,7 @@ function Invoke-TsTimestampRemux {
             '-hide_banner',
             '-loglevel', 'error',
             '-stats',
-            '-y',
+            '-n',
             '-i', $tempPath,
             '-map', '0',
             '-c', 'copy'
@@ -718,48 +750,57 @@ function Invoke-TsTimestampRemux {
         )
 
         Invoke-NativeChecked -Exe $Ffmpeg -Label 'Stage 2/2: MKV to MP4 copy remux with timestamp repair' -CommandArgs $finalArgs
+
+        if (-not (Test-Path -LiteralPath $resolvedOutputPath -PathType Leaf) -or
+            (Get-Item -LiteralPath $resolvedOutputPath).Length -le 0) {
+            throw 'FFmpeg returned success but did not create a non-empty output file.'
+        }
+
+        Write-Host ''
+        Write-Host ('✅ Output: {0}' -f $resolvedOutputPath) -ForegroundColor Green
+
+        $outputStats = @(Get-TimestampStats -Ffprobe $Ffprobe -InputPath $resolvedOutputPath)
+        Write-TimestampStats -Title 'Output timestamp diagnosis:' -Stats $outputStats
+
+        $verificationPassed = $false
+        if (-not $NoVerify) {
+            $verificationPassed = Invoke-NativeVerificationChecked -Exe $Ffmpeg -Label 'Verification: copy-mode remux read' -CommandArgs @(
+                '-hide_banner',
+                '-v', 'warning',
+                '-i', $resolvedOutputPath,
+                '-map', '0',
+                '-c', 'copy',
+                '-f', 'null',
+                '-'
+            )
+        } else {
+            Write-Warn 'Output verification was skipped because -NoVerify was used. Source deletion is disabled.'
+        }
+
+        $timestampStatsClean = Test-StatsCleanForMuxing -Stats $outputStats
+        if ($timestampStatsClean) {
+            Write-Ok 'Result: output has no backwards or tiny duplicate PTS/DTS packets.'
+        } else {
+            Write-Warn 'Result: output was created, but timestamp warnings remain. Try without -SkipSettsRepair, or re-encode as a last resort.'
+        }
+
+        $keepOutput = $true
+        [void](Remove-SourceTsAfterSuccess `
+            -InputPath $resolvedInputPath `
+            -OutputPath $resolvedOutputPath `
+            -KeepSource:$KeepSource `
+            -DeleteSource:$DeleteSource `
+            -VerificationPassed:$verificationPassed `
+            -TimestampStatsClean:$timestampStatsClean)
     }
     finally {
         if ((-not $KeepTemp) -and (Test-Path -LiteralPath $tempPath)) {
-            Remove-Item -LiteralPath $tempPath -Force
+            Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
+        }
+        if ((-not $keepOutput) -and (Test-Path -LiteralPath $resolvedOutputPath -PathType Leaf)) {
+            Remove-Item -LiteralPath $resolvedOutputPath -Force -ErrorAction SilentlyContinue
         }
     }
-
-    Write-Host ''
-    Write-Host ('✅ Output: {0}' -f $resolvedOutputPath) -ForegroundColor Green
-
-    $outputStats = @(Get-TimestampStats -Ffprobe $Ffprobe -InputPath $resolvedOutputPath)
-    Write-TimestampStats -Title 'Output timestamp diagnosis:' -Stats $outputStats
-
-    $verificationPassed = $false
-    if (-not $NoVerify) {
-        $verificationPassed = Invoke-NativeVerificationChecked -Exe $Ffmpeg -Label 'Verification: copy-mode remux read' -CommandArgs @(
-            '-hide_banner',
-            '-v', 'warning',
-            '-i', $resolvedOutputPath,
-            '-map', '0',
-            '-c', 'copy',
-            '-f', 'null',
-            '-'
-        )
-    } else {
-        Write-Warn 'Output verification was skipped because -NoVerify was used. Source deletion is disabled.'
-    }
-
-    $timestampStatsClean = Test-StatsCleanForMuxing -Stats $outputStats
-    if ($timestampStatsClean) {
-        Write-Ok 'Result: output has no backwards or tiny duplicate PTS/DTS packets.'
-    } else {
-        Write-Warn 'Result: output was created, but timestamp warnings remain. Try without -SkipSettsRepair, or re-encode as a last resort.'
-    }
-
-    [void](Remove-SourceTsAfterSuccess `
-        -InputPath $resolvedInputPath `
-        -OutputPath $resolvedOutputPath `
-        -KeepSource:$KeepSource `
-        -DeleteSource:$DeleteSource `
-        -VerificationPassed:$verificationPassed `
-        -TimestampStatsClean:$timestampStatsClean)
 }
 
 function Invoke-FolderTimestampScan {
@@ -837,6 +878,13 @@ $ffmpeg = Resolve-RequiredCommand -Name 'ffmpeg'
 $ffprobe = Resolve-RequiredCommand -Name 'ffprobe'
 $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
 $targetItem = Get-Item -LiteralPath $resolvedPath
+
+if ($MoveProblemFiles -and -not $AnalyzeOnly) {
+    throw '-MoveProblemFiles requires -AnalyzeOnly.'
+}
+if ($MoveProblemFiles -and -not $targetItem.PSIsContainer) {
+    throw '-MoveProblemFiles is only supported for folder scans.'
+}
 
 if ($targetItem.PSIsContainer) {
     if ($OutputPath) {

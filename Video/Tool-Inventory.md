@@ -17,13 +17,13 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Remux MKV to MP4 | `RemuxToMP4.ps1`, `RemuxToMP4.reg` | Real AAC stream-copy and PCM-to-AAC tests; source preserved; existing output unchanged; invalid input leaves no partial MP4 |
 | Merge matching MP4 + SRT | `Merge-MP4-SRT.ps1`, `Merge-MP4-SRT.reg` | Real video+subtitle MKV validation; sources preserved; existing output unchanged; missing/invalid input leaves no partial MKV |
 | Convert WebP/AVIF/HEIC/HEIF | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | 25 real assertions in both shells under Limited policy; five Registry commands imported and read back; static/animated timing and output validation verified |
+| TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `lib\TsSourceCleanup.ps1` | Clean B-frame and deliberately broken-timeline TS classification; single/folder repair; source, collision, partial-output and unique-move safety; six Registry entries read back |
 
 ## Pending User-Facing Workflow Review
 
 | Workflow | Artifacts | Dependency/state | Next decision |
 | --- | --- | --- | --- |
 | Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Legacy ASFBin is present but unsigned and has a non-commercial/evaluation license boundary; menu is not installed | Decide whether to replace simple joins with FFmpeg or explicitly retain ASFBin's specialized damaged-ASF behavior |
-| TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `Ts-Timestamp-Remux.md` | FFmpeg/ffprobe available; safety and smoke tests pass | Review all six menu actions and real problem samples before Registry import |
 | MP4 file containing TS data | `Repair-Mp4DisguisedTs.ps1` | FFmpeg/ffprobe available; terminal-only | Keep terminal-only until a real repeated use case justifies a menu |
 
 ## Diagnostics and Prototypes — Do Not Install Yet

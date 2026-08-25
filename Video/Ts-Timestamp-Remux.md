@@ -153,10 +153,10 @@ Analyze TS timestamps
 Fix TS -> MP4 (No re-encode)
 ```
 
-It also adds two Shift-only folder actions for top-level `.ts` files:
+It also adds two Shift-only folder actions for top-level `.ts` files (both on a folder and its background, for six Registry locations total):
 
 ```text
-Scan TS folder for problems
+Scan and move problem TS files
 Fix TS -> MP4 in folder (No re-encode)
 ```
 
@@ -164,6 +164,8 @@ The fix actions write MP4 files into `_TS_FIXED_MP4` using the original base nam
 
 The scan action displays every `.ts` file with an `OK`, `WARN`, or `PROBLEM` status. `PROBLEM` means hard timestamp issues such as tiny/duplicate PTS/DTS or backwards timestamps; those files are moved into `_TS_TIMESTAMP_PROBLEMS`.
 It also treats heavy video cadence jitter as `PROBLEM`, because `2.ts` proved that monotonic timestamps can still fail strict Avidemux direct MP4 save.
+
+PTS cadence is evaluated in sorted presentation order. FFprobe emits H.264 packets in decode/demux order, where B-frames can naturally make PTS values appear to go backwards; treating that packet ordering as corruption caused healthy H.264 TS files to be moved. DTS monotonicity remains checked in packet order, while duplicate PTS, gaps, and cadence are checked in presentation order.
 
 ## Known Limits
 
@@ -176,6 +178,7 @@ It also treats heavy video cadence jitter as `PROBLEM`, because `2.ts` proved th
 | Not visual repair | This does not fix corrupted frames like the `3.mp4` case. |
 | Avidemux/GUI still matters | Packet checks can look clean, but final acceptance is opening/seeking in the target player/editor. |
 | Re-encode is last resort | If timestamps still fail after copy remux + setts, only then consider re-encoding affected sections. |
+| Existing outputs are preserved | Repair refuses an existing MP4, uses a unique stage filename, and removes only a newly-created partial output after failure. |
 
 ## Result From `1.ts`
 
