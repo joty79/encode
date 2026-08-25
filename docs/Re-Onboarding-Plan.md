@@ -31,7 +31,7 @@ Current limitations and remaining work:
 
 - The three restored video/queue context-menu groups were imported from legacy `.reg` files and are not yet owned by a project installer or uninstaller.
 - The `.reg` files still contain machine-specific absolute checkout and icon paths.
-- MKVToolNix v101.0 is installed at its standard path and is recognized there by the preflight, though it is not on `PATH`. ImageMagick v7.1.2-30 is installed, runtime-verified, and recognized; its reviewed smart-conversion menu awaits the explicit Limited-policy decision and Registry import. Subtitle Edit CLI remains unavailable.
+- MKVToolNix v101.0 is installed at its standard path and is recognized there by the preflight, though it is not on `PATH`. ImageMagick v7.1.2-30 uses the verified bundled Limited policy, and its reviewed smart-conversion menu is installed. Subtitle Edit CLI remains unavailable.
 - Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
 
 The installer milestone is deferred until the `Video` folder review and context-menu redesign are complete. The immediate milestone is to characterize every Video workflow, separate supported utilities from prototypes/testing artifacts, recover only required dependencies, and restore approved menus incrementally. `Video\Tool-Inventory.md` owns the live classification and order.
