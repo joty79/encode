@@ -7,6 +7,7 @@ All notable changes to this repo are recorded here.
 - Restored the official standalone Subtitle Edit SeConv v5.1.0 x64 asset to `C:\Program Files\Subtitle Edit CLI`. The preserved ZIP exactly matches the size and SHA-256 published by the official GitHub release API; runtime, embedded product version, license, unsigned status, and the upstream `--version` banner inconsistency are recorded in `subtitle\README.md`.
 - Replaced the hardcoded legacy VTT runner with a safe `Convert-ToSrt.ps1` workflow that resolves SeConv at its current installation path, preserves sources, refuses collisions, converts through a unique temporary directory, and validates the final SRT.
 - Reworked MKV subtitle extraction to inspect tracks through MKVToolNix and perform a real SeConv text conversion. It now refuses multiple tracks, image/OCR tracks, invalid inputs, existing outputs, and partial results instead of potentially naming ASS or binary data `.srt`. Twenty-eight assertions pass in PowerShell 7 and 5.1; both reviewed Explorer actions were moved from machine-wide `HKCR` to per-user `HKCU\Software\Classes`, imported, and read back exactly.
+- Kept the hardened damaged-video prototype as the active version while preserving the exact pre-edit `Repair-DamagedVideo.ps1` from commit `5c202ba` in a local hashed archive and pushed Git tag. Documented the mandatory future side-by-side test on a real broken video, including visual artifacts, detection ranges, audio sync, decode, seeking, and input/output hashes.
 
 ## 2026-08-25
 

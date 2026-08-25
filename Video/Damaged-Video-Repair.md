@@ -189,6 +189,37 @@ quality or prove that the detector generalizes to every real corruption pattern.
 The workflow therefore stays a prototype until another real damaged sample is
 repaired and reviewed visually.
 
+## Required real-video comparison
+
+The hardened script at the repository tip remains the active/default version. Do
+not roll it back merely because its behavior changed during the 2026-08-25 audit.
+Its synthetic safety coverage found useful correctness defects, but it has not yet
+been compared visually against the pre-audit implementation on a new real damaged
+video.
+
+When another broken video is available, test both implementations on separate
+copies:
+
+| Candidate | Exact reference |
+| --- | --- |
+| Current hardened script | `Video\Repair-DamagedVideo.ps1` from commit `199c890` or later |
+| Pre-edit comparison script | `Video\Repair-DamagedVideo.ps1` from commit `5c202ba` |
+
+The pre-edit snapshot is preserved in two durable forms:
+
+- Git tag: `repair-damaged-video-pre-hardening-2026-08-25`
+- Local archive: `D:\Programs\Video\encode-Repair-DamagedVideo-pre-hardening-5c202ba.zip`
+- Archive SHA-256:
+  `21E44BB3C17388B31AB54164DD7091391A5AC304FFFD205B9CEDD913ABCE94B3`
+- Exact pre-edit script Git blob:
+  `b252982679caec2db267481a23797c108a22abfd`
+
+Run both only against copies and use different output paths. Compare detected
+packet/range boundaries, removed duration, audio continuity and sync, complete
+decode results, seeking, and the actual visible artifacts. Record the input hash,
+commands, both output hashes, and the visual decision here before promoting the
+hardened version beyond prototype status.
+
 ## Known Limits
 
 | Limit | Note |

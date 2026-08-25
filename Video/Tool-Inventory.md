@@ -37,7 +37,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 
 | Artifact | Classification | Reason |
 | --- | --- | --- |
-| `Repair-DamagedVideo.ps1` | Characterized prototype | 30 synthetic safety assertions pass in both PowerShell hosts, including exact sub-second detection, a real patch repair, source/collision/failure cleanup, and full-decode validation. Keep terminal-only because one synthetic fixture and the historical `3.mp4` visual result do not prove universal detector behavior. |
+| `Repair-DamagedVideo.ps1` | Characterized prototype | The hardened version remains active and 30 synthetic safety assertions pass in both PowerShell hosts. Promotion requires a side-by-side real broken-video and visual comparison with the preserved pre-edit script from commit `5c202ba`; exact archive/tag references are recorded in `Damaged-Video-Repair.md`. |
 | `Damaged-Video-Repair.md` | Prototype documentation | Owns the limits and evidence for the damaged-H.264 experiment |
 
 ## Support Files — Not Standalone Tools
