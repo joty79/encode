@@ -21,7 +21,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 
 | Workflow | Artifacts | Dependency/state | Next decision |
 | --- | --- | --- | --- |
-| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | ASFBin exists at the script's fixed path but is not on `PATH` | Review selection rules, overwrite policy, exit handling, and real join behavior |
+| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Legacy ASFBin is present but unsigned and has a non-commercial/evaluation license boundary; menu is not installed | Decide whether to replace simple joins with FFmpeg or explicitly retain ASFBin's specialized damaged-ASF behavior |
 | Convert WebP/AVIF/HEIC | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | ImageMagick `magick` missing; FFmpeg available | Recover ImageMagick, then test static and animated inputs without overwriting existing output |
 | TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `Ts-Timestamp-Remux.md` | FFmpeg/ffprobe available; safety and smoke tests pass | Review all six menu actions and real problem samples before Registry import |
 | MP4 file containing TS data | `Repair-Mp4DisguisedTs.ps1` | FFmpeg/ffprobe available; terminal-only | Keep terminal-only until a real repeated use case justifies a menu |
@@ -63,7 +63,7 @@ Do not infer intended behavior from their names. Decide whether to populate or r
 | PowerShell 7 / Windows Terminal | Available |
 | FFmpeg / ffprobe 9.0 | Available on `PATH` |
 | AviSynth+ 3.7.5 / QTGMC / FFMS2 | Restored and runtime-verified |
-| ASFBin | Present at `C:\Program Files\CutAssist\asfbin\asfbin.exe`; not on `PATH` |
+| ASFBin | v1.8.3.934 (2012) at `C:\Program Files\CutAssist\asfbin\asfbin.exe`; unsigned, not on `PATH`, license decision pending |
 | MKVToolNix | v101.0 x64 installed at `C:\Program Files\MKVToolNix`; signed CLI tools verified; not on `PATH` |
 | ImageMagick | `magick` missing from `PATH` |
 
@@ -77,6 +77,14 @@ Do not infer intended behavior from their names. Decide whether to populate or r
 - Runtime: `mkvmerge v101.0 ('Time To Turn') 64-bit`, exit code `0`; `mkvmerge`, `mkvextract`, `mkvinfo`, and `mkvpropedit` files are present and signed.
 - The user completed the interactive installer/legal choices. The older preserved v88 installer remains in `D:\Programs\Video` but was not used.
 - `gMKVExtractGUI` is an optional manual GUI in `D:\Programs\Video`; no repository script references or requires it.
+
+### WMV Join Review Evidence
+
+- The legacy Registry entry is not installed. As written, it targets `HKEY_CLASSES_ROOT\*`, so it would appear for every file type instead of only WMV files.
+- The script passes ASFBin `-y`, does not protect an existing output, does not verify ASFBin's exit code or output, and can over-match numeric/token-related filenames. Manual mode also shadows PowerShell's automatic `$input` variable.
+- Installed ASFBin reports v1.8.3.934, was built in 2012, is not Authenticode-signed, and its bundled documentation states that it is free for non-commercial use while the executable help says evaluation use. No terms were accepted or interpreted by the agent.
+- A synthetic two-part WMV test proved that FFmpeg 9 can concatenate compatible WMV2/WMA2 inputs by stream copy into a valid ASF/WMV output with both streams and a clean full decode.
+- The FFmpeg test does not prove equivalence to ASFBin's specialized damaged-ASF recovery behavior. Do not restore this menu until the intended use and dependency choice are explicit.
 
 ## Agreed Order
 
