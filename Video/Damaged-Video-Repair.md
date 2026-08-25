@@ -159,11 +159,41 @@ pwsh -File '.\Video\Repair-DamagedVideo.ps1' `
   -DryRun
 ```
 
+## Characterization on the restored Windows 11 machine
+
+The saved implementation was safety-reviewed on 2026-08-25 and remains a
+terminal-only prototype. Its executable scope is now deliberately narrow:
+
+- MP4/MOV container with H.264 AVCC and 4-byte NAL lengths only;
+- optional audio (video-only input is supported);
+- `h264_nvenc` or `libx264` for patch re-encoding;
+- source frame timing is retained instead of forcing 50 fps;
+- an existing output is refused, the source is never overwritten, and a failed
+  repair removes any newly created partial final output;
+- the final MP4 must contain exactly one video stream and pass a full FFmpeg
+  decode before the script reports success.
+
+The synthetic regression fixture deliberately corrupts the AVCC NAL length of a
+known packet at PTS `00:00:00.440`. The test proves exact sub-second range math,
+padding to `00:00:00.390`, execution of a real re-encoded patch, audio/video
+presence, collision and failure cleanup, video-only support, and strict rejection
+of non-H.264 input. It passes under PowerShell 7 and Windows PowerShell 5.1.
+
+Two subtle PowerShell defects were corrected during characterization: casts on
+property expressions needed explicit parentheses, and `[Math]::Max(0, value)`
+selected an integer overload that rounded sub-second timestamps to zero. The
+detector now uses floating-point range math throughout.
+
+Automated structural/decode validation is necessary but cannot judge visual
+quality or prove that the detector generalizes to every real corruption pattern.
+The workflow therefore stays a prototype until another real damaged sample is
+repaired and reviewed visually.
+
 ## Known Limits
 
 | Limit | Note |
 |-------|------|
-| H.264/AVC focus | Το script είναι calibrated για MP4/H.264 AVCC payloads. |
+| Strict H.264/AVC scope | Το script αρνείται οτιδήποτε εκτός MP4/MOV H.264 AVCC με 4-byte NAL lengths. |
 | Not visually omniscient | Tiny one-frame visual issues μπορεί να μην είναι worth chasing, ειδικά αν δεν φαίνονται σε realtime playback. |
 | Conservative cuts | Καλύτερα να κόψει λίγο παραπάνω παρά να αφήσει visible corruption. |
 | Audio matters | Κάθε patch πρέπει να κόβει audio και video με ίδιο timeline. |

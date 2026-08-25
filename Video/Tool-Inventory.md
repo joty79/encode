@@ -19,11 +19,11 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Convert WebP/AVIF/HEIC/HEIF | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | 25 real assertions in both shells under Limited policy; five Registry commands imported and read back; static/animated timing and output validation verified |
 | TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `lib\TsSourceCleanup.ps1` | Clean B-frame and deliberately broken-timeline TS classification; single/folder repair; source, collision, partial-output and unique-move safety; six Registry entries read back |
 
-## Pending User-Facing Workflow Review
+## Legacy Hold — Not Installed or Supported
 
-| Workflow | Artifacts | Dependency/state | Next decision |
+| Workflow | Artifacts | Classification | Reason |
 | --- | --- | --- | --- |
-| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Legacy ASFBin is present but unsigned and has a non-commercial/evaluation license boundary; menu is not installed | Decide whether to replace simple joins with FFmpeg or explicitly retain ASFBin's specialized damaged-ASF behavior |
+| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Preserved legacy workflow; do not install | The old ASFBin dependency has an unresolved license boundary and the script is unsafe as written. FFmpeg can replace ordinary compatible joins, but that would not preserve ASFBin's possible damaged-ASF recovery behavior. Revisit only with a real WMV use case that defines which behavior is required. |
 
 ## Supported Terminal-Only Workflows
 
@@ -37,7 +37,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 
 | Artifact | Classification | Reason |
 | --- | --- | --- |
-| `Repair-DamagedVideo.ps1` | Saved prototype | Its own help says it is not a universal repair engine; keep terminal-only until independently validated |
+| `Repair-DamagedVideo.ps1` | Characterized prototype | 30 synthetic safety assertions pass in both PowerShell hosts, including exact sub-second detection, a real patch repair, source/collision/failure cleanup, and full-decode validation. Keep terminal-only because one synthetic fixture and the historical `3.mp4` visual result do not prove universal detector behavior. |
 | `Damaged-Video-Repair.md` | Prototype documentation | Owns the limits and evidence for the damaged-H.264 experiment |
 
 ## Support Files — Not Standalone Tools
@@ -50,7 +50,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 | `ContextMenuHandlers.reg` | Global Explorer multi-selection tweak; not a media command and deferred until context-menu redesign |
 | `icons.code-workspace` | Editor workspace artifact; not an installable tool |
 
-## Empty Inspector Scaffolding
+## Inert Inspector Scaffolding
 
 These tracked files are currently zero bytes and are not loaded by `inspect.ps1`:
 
@@ -59,7 +59,9 @@ These tracked files are currently zero bytes and are not loaded by `inspect.ps1`
 - `inspector\lib\Probe.ps1`
 - `inspector\Readme.md`
 
-Do not infer intended behavior from their names. Decide whether to populate or remove them only during the Inspector/context-menu redesign.
+They have been empty since the repository's initial commit, have no references, and
+perform no runtime role. Preserve them as inert historical scaffolding for now;
+populate or remove them only during the Inspector/context-menu redesign.
 
 ## Dependency Snapshot — 2026-08-25
 
@@ -105,4 +107,9 @@ Do not infer intended behavior from their names. Decide whether to populate or r
 
 ## Agreed Order
 
-Finish review and characterization of the `Video` folder before designing an installer. Restore only approved context-menu entries as their workflow tests pass. Revisit installer/uninstaller architecture only after obsolete, testing-only, and prototype tools have been separated from the final context-menu design.
+The `Video` folder review is complete: every PowerShell workflow is classified as
+installed/verified, supported terminal-only, characterized prototype, legacy hold,
+or support/scaffolding. Restore only approved context-menu entries as their workflow
+tests pass. The next re-onboarding slice is the subtitle dependency and helper audit;
+installer/uninstaller architecture remains deferred until the broader context-menu
+set is redesigned.

@@ -25,7 +25,7 @@ Completed and pushed on `codex/re-onboard-encode`:
 - Recorded the real-input golden baseline, including exact settings, input/output hashes, media metadata, full decode validation, and user visual acceptance.
 - Manually restored and runtime-verified the classic Explorer actions for direct video encoding, silent queue addition, and queue execution.
 - Verified successful queue cleanup and failed-item retention. Invalid media now stops with a focused ffprobe failure instead of cascading metadata parse errors.
-- Parsed all 40 PowerShell sources and passed all eleven test scripts in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+- Parsed all 40 PowerShell sources and passed all twelve test scripts in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
 
 Current limitations and remaining work:
 
@@ -34,7 +34,12 @@ Current limitations and remaining work:
 - MKVToolNix v101.0 is installed at its standard path and is recognized there by the preflight, though it is not on `PATH`. ImageMagick v7.1.2-30 uses the verified bundled Limited policy, and its reviewed smart-conversion menu is installed. Subtitle Edit CLI remains unavailable.
 - Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
 
-The installer milestone is deferred until the `Video` folder review and context-menu redesign are complete. The immediate milestone is to characterize every Video workflow, separate supported utilities from prototypes/testing artifacts, recover only required dependencies, and restore approved menus incrementally. `Video\Tool-Inventory.md` owns the live classification and order.
+The `Video` folder review is complete and `Video\Tool-Inventory.md` owns its final
+re-onboarding classification. The legacy WMV/ASFBin workflow is retained but not
+installed, the damaged-H.264 tool remains a characterized terminal-only prototype,
+and the empty Inspector files are inert historical scaffolding. The immediate next
+milestone is Subtitle Edit CLI recovery and subtitle-helper characterization. The
+installer milestone remains deferred until the broader context-menu redesign.
 
 ## Phases
 
