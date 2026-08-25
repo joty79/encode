@@ -13,58 +13,80 @@ $root = $PSScriptRoot
 . "$root\lib\Render.ps1"
 
 # --- ffprobe executable ---
-$ffprobe = "ffprobe"
+$ffprobeCommand = Get-Command -Name 'ffprobe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $ffprobeCommand) {
+    throw 'Required command ffprobe was not found in PATH.'
+}
 
-foreach ($path in $Paths) {
+$ffprobe = $ffprobeCommand.Source
+$hadFailures = $false
+$videoExtensions = "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.mpg", "*.mpeg", "*.vob", "*.ts"
+
+foreach ($requestedPath in $Paths) {
 
     # 🔸 FIX: Clean quotes just in case
-    $path = $path -replace '"', ''
+    $requestedPath = $requestedPath -replace '"', ''
 
     # -----------------------------
     # Resolve files to inspect
     # -----------------------------
     $targets = @()
-    $videoExtensions = "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.mpg", "*.mpeg", "*.vob"
 
     # 🔸 FIX: .NET Directory Check
-    if ([System.IO.Directory]::Exists($path)) {
+    if ([System.IO.Directory]::Exists($requestedPath)) {
         # Folder mode
         $targets = Get-ChildItem `
-            -LiteralPath $path `
+            -LiteralPath $requestedPath `
             -Recurse `
             -File `
             -Include $videoExtensions
     }
     # 🔸 FIX: .NET File Check
-    elseif ([System.IO.File]::Exists($path)) {
+    elseif ([System.IO.File]::Exists($requestedPath)) {
         # Single file mode
-        $targets = @( Get-Item -LiteralPath $path )
+        $targets = @( Get-Item -LiteralPath $requestedPath )
     }
     else {
-        Write-Warning "Invalid path: $path"
+        Write-Warning "Invalid path: $requestedPath"
+        $hadFailures = $true
         continue
     }
 
     if ($targets.Count -eq 0) {
-        Write-Warning "No video files found in folder: $path"
+        Write-Warning "No video files found in folder: $requestedPath"
+        $hadFailures = $true
         continue
     }
 
     foreach ($file in $targets) {
 
-        $path = $file.FullName
+        $targetPath = $file.FullName
 
         # --- ffprobe JSON ---
-        $json = & $ffprobe `
+        $probeOutput = & $ffprobe `
             -v error `
             -print_format json `
             -show_streams `
             -show_format `
-            "$path" | ConvertFrom-Json
+            $targetPath 2>&1
+        $ffprobeExitCode = $LASTEXITCODE
+        $probeText = $probeOutput -join [Environment]::NewLine
 
+        if ($ffprobeExitCode -ne 0) {
+            Write-Warning "ffprobe failed with exit code $ffprobeExitCode`: $targetPath"
+            if (-not [string]::IsNullOrWhiteSpace($probeText)) {
+                Write-Host $probeText -ForegroundColor DarkYellow
+            }
+            $hadFailures = $true
+            continue
+        }
 
-        if (-not $json) {
-            Write-Warning "ffprobe failed: $path"
+        try {
+            $json = $probeText | ConvertFrom-Json -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "ffprobe returned invalid JSON: $targetPath"
+            $hadFailures = $true
             continue
         }
 
@@ -73,7 +95,8 @@ foreach ($path in $Paths) {
         $audio = $json.streams | Where-Object codec_type -eq "audio" | Select-Object -First 1
 
         if (-not $video) {
-            Write-Warning "No video stream found: $path"
+            Write-Warning "No video stream found: $targetPath"
+            $hadFailures = $true
             continue
         }
 
@@ -131,7 +154,7 @@ foreach ($path in $Paths) {
         # 3) fallback: compute from file size / duration
         elseif ($json.format.duration -and $json.format.duration -gt 0) {
             # 🔸 FIX: LiteralPath for size
-            $fileSizeBytes = (Get-Item -LiteralPath $path).Length
+            $fileSizeBytes = (Get-Item -LiteralPath $targetPath).Length
             $bitrateMbps = [math]::Round(
                 ($fileSizeBytes * 8) / $json.format.duration / 1e6,
                 2
@@ -159,7 +182,7 @@ foreach ($path in $Paths) {
 
         # File (only filename, not full path)
         # 🔸 FIX: .NET Safe Filename
-        Render-File ([System.IO.Path]::GetFileName($path))
+        Render-File ([System.IO.Path]::GetFileName($targetPath))
 
         # Video
         Render-Video `
@@ -197,4 +220,8 @@ foreach ($path in $Paths) {
         }
     }
 
+}
+
+if ($hadFailures) {
+    throw 'Media inspection completed with one or more failures.'
 }

@@ -34,7 +34,7 @@ Current limitations and remaining work:
 - MKVToolNix, ImageMagick, and Subtitle Edit CLI are not currently on `PATH`; they are optional for the verified encode/QTGMC path but required by other project slices.
 - Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
 
-Next milestone: implement the installation architecture for the proven video encode/queue slice first. It must provide selectable install/uninstall actions, prefer per-user Explorer keys, derive paths from the actual checkout, verify dependencies, read back exact Registry values, and remove only installer-owned keys.
+The installer milestone is deferred until the `Video` folder review and context-menu redesign are complete. The immediate milestone is to characterize every Video workflow, separate supported utilities from prototypes/testing artifacts, recover only required dependencies, and restore approved menus incrementally. `Video\Tool-Inventory.md` owns the live classification and order.
 
 ## Phases
 

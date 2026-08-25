@@ -9,6 +9,7 @@ All notable changes to this repo are recorded here.
 - Revalidated the preserved QTGMC hash manifest and complete `AviSynth+.rar` integrity after installation; the custom payload and safety archive remained unchanged.
 - Completed the real-input recovery baseline with a bottom-field-first MPEG-2 sample through the restored Explorer context menu; verified progressive H.264/AAC output metadata, hashes, full error-strict decode, persisted settings, and user visual acceptance.
 - Restored the video queue Explorer menus and runtime-verified the real silent-add-to-queue path, successful QTGMC batch encoding and queue cleanup, plus failed-item retention. Hardened invalid-video metadata probing so ffprobe failures stop with one focused error instead of cascading null and divide-by-zero errors.
+- Reviewed and restored the read-only media Inspector, added `.ts` file/folder discovery and context-menu integration, and made failed or invalid ffprobe results return nonzero while mixed-folder inspection continues. Added a canonical Video tool inventory and deferred installer work until the Video context-menu set is fully reviewed.
 
 ## 2026-08-24
 

@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $verifyScript = Join-Path $repoRoot 'Video\Verify-VideoIntegrity.ps1'
 $detectScript = Join-Path $repoRoot 'Video\Detect-BadCuts.ps1'
+$inspectScript = Join-Path $repoRoot 'Video\inspector\inspect.ps1'
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("encode-video-exit-tests-{0}" -f [guid]::NewGuid())
 $assertionCount = 0
 
@@ -34,11 +35,13 @@ function Invoke-VideoScript {
         [Parameter(Mandatory = $true)]
         [string[]]$ArgumentList,
 
-        [hashtable]$Environment = @{}
+        [hashtable]$Environment = @{},
+
+        [string]$HostPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
     )
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+    $startInfo.FileName = $HostPath
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
@@ -189,6 +192,24 @@ public static class FakeVideoTool
     }
     Assert-Condition ($cutSuccess.ExitCode -eq 0) 'Aligned cut path must still succeed.'
     Assert-Condition ($cutSuccess.Combined -match 'All specified cuts are properly aligned') 'Aligned cut path must retain its success result.'
+
+    $pwshPath = (Get-Command pwsh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    $inspectorFailure = Invoke-VideoScript -HostPath $pwshPath -ScriptPath $inspectScript -ArgumentList @($inputPath) -Environment @{
+        FAKE_FFPROBE_EXIT   = '11'
+        FAKE_FFPROBE_STDERR = 'simulated inspector probe failure'
+    }
+    Assert-Condition ($inspectorFailure.ExitCode -ne 0) 'Inspector must fail when ffprobe exits nonzero.'
+    Assert-Condition ($inspectorFailure.Combined -match 'simulated inspector probe failure') 'Inspector must preserve ffprobe diagnostics.'
+    Assert-Condition ($inspectorFailure.Combined -notmatch '(?m)^File:') 'Inspector must not render successful media details after ffprobe failure.'
+
+    $validInspectorJson = '{"streams":[{"codec_type":"video","codec_name":"h264","width":1920,"height":1080,"r_frame_rate":"30/1","avg_frame_rate":"30/1","field_order":"progressive","bit_rate":"5000000","sample_aspect_ratio":"1:1","display_aspect_ratio":"16:9"},{"codec_type":"audio","sample_rate":"48000"}],"format":{"duration":"10","bit_rate":"5000000"}}'
+    $inspectorSuccess = Invoke-VideoScript -HostPath $pwshPath -ScriptPath $inspectScript -ArgumentList @($inputPath) -Environment @{
+        FAKE_FFPROBE_EXIT     = '0'
+        FAKE_FFPROBE_DURATION = $validInspectorJson
+    }
+    Assert-Condition ($inspectorSuccess.ExitCode -eq 0) 'Inspector must retain successful metadata rendering.'
+    Assert-Condition ($inspectorSuccess.Combined -match '(?m)^File:') 'Inspector success must render the file row.'
+    Assert-Condition ($inspectorSuccess.Combined -match 'Progressive') 'Inspector success must render scan metadata.'
 
     $missingInput = Join-Path $tempRoot 'missing.mp4'
     $missingVerifyResult = Invoke-VideoScript -ScriptPath $verifyScript -ArgumentList @('-Path', $missingInput)
