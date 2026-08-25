@@ -9,7 +9,7 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - Preserve existing behavior unless a change is explicitly requested.
 - Treat the established encode/audio/queue workflows as a known-good legacy core; restore and characterize them before modernization.
 - Treat the video-integrity and TS timestamp/repair tooling added in `fb33b0d` as a newer diagnostic layer that requires independent validation.
-- The known-good interlaced-video path uses FFmpeg `idet`, AviSynth+ 3.7.5 x64, FFMS2, and QTGMC. The Windows 11 environment was restored and synthetic QTGMC-to-NVENC runtime-verified on 2026-08-25; a representative real-input golden baseline remains pending. `docs/AviSynth-QTGMC-Recovery.md` owns the detailed recovery evidence.
+- The known-good interlaced-video path uses FFmpeg `idet`, AviSynth+ 3.7.5 x64, FFMS2, and QTGMC. The Windows 11 environment and a representative real-input QTGMC-to-NVENC golden baseline were verified on 2026-08-25. `docs/AviSynth-QTGMC-Recovery.md` owns the detailed recovery evidence.
 
 ## Guardrails
 

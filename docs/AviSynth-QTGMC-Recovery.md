@@ -2,7 +2,7 @@
 
 ## Status
 
-This document captures the known-good Windows 10 environment used by the legacy video encoder and its Windows 11 recovery. AviSynth+ 3.7.5, FFMS2, QTGMC, and the existing NVENC path were restored and synthetic runtime-verified on 2026-08-25. A final golden-baseline run with a representative real input is still pending.
+This document captures the known-good Windows 10 environment used by the legacy video encoder and its Windows 11 recovery. AviSynth+ 3.7.5, FFMS2, QTGMC, and the existing NVENC path were restored and verified with both synthetic media and a representative real interlaced MPEG-2 input on 2026-08-25.
 
 The existing encoding workflow was working for its intended use. Recovery must preserve that behavior before any modernization or refactoring.
 
@@ -116,6 +116,26 @@ Runtime gates passed with FFmpeg 9.0:
 5. The preserved SHA-256 manifest remained 12/12 clean with zero missing files or mismatches.
 6. `E:\Compilers\AviSynth+.rar` remained unchanged and passed a complete 7-Zip archive test (`46` files, `Everything is Ok`).
 
+## Representative Real-Input Golden Baseline
+
+The restored classic Explorer context menu launched the unchanged `Video\video_encode.ps1` against a machine-local `3.mpg` sample on 2026-08-25. The media remains untracked; hashes identify the exact files without adding personal video content to the repository.
+
+| Evidence | Result |
+| --- | --- |
+| Source | `3.mpg`, 23,157,106 bytes, SHA-256 `082D9FC2918125A120086F13E0634920A72D8A56126ECA41397AB24571F7EE53` |
+| Source video | MPEG-2, 720x480, 30000/1001 fps, bottom-field-first |
+| Full-file FFmpeg `idet` | Multi-frame: 0 TFF, 1170 BFF, 0 progressive, 0 undetermined |
+| Encode settings | QP 22, no resize, GOP 1 second |
+| Deinterlace recipe | `AssumeBFF()`, `QTGMC(Preset="Slow", TR2=2, FPSDivisor=2)`, `Prefetch(14)` |
+| Output | `3.mp4`, 12,947,491 bytes, SHA-256 `EDC2B74011E990CD6838AECBA85EFCE7AEF2ADD6384A7238E2256FEF18DB2F7B` |
+| Output video | H.264, 720x480, 30000/1001 fps, progressive, 1169 decoded frames |
+| Output audio | AAC stereo, 48 kHz |
+| Duration | Source 39.072367 seconds; output 39.058021 seconds |
+| Decode validation | Complete FFmpeg audio/video decode with `-xerror`, exit code `0` |
+| Visual acceptance | User reported that the result looked good and completed quickly |
+
+The interactive console transcript was not retained because the run was launched before baseline capture began. The persisted batch settings, independent input analysis, output metadata, hashes, complete decode, and user visual acceptance provide the recovery baseline.
+
 The live `unins000.exe` and `unins000.dat` were replaced by the 2026-08-25 installer and now belong to the current Windows 11 installation. The `.rar` snapshot still contains the old Windows 10 uninstall pair; do not restore those old files over the live installation.
 
 ## Recovery Sequence
@@ -134,6 +154,6 @@ The live `unins000.exe` and `unins000.dat` were replaced by the 2026-08-25 insta
    - QTGMC against a short controlled interlaced sample
    - FFmpeg reading the generated `.avs`
    - the unchanged `Video\video_encode.ps1` against a copy of a representative input
-10. Preserve the successful input, settings, console transcript, output metadata, and output hash as the golden baseline. This final representative-input gate remains pending after the successful synthetic recovery tests above.
+10. Preserve the successful input identity, settings, output metadata, output hash, decode result, and visual acceptance as the golden baseline. The 2026-08-25 representative-input run above completed this recovery gate; its interactive console transcript was not retained.
 
 Parser/static checks and Registry readback are not substitutes for the final media encode test.

@@ -7,6 +7,7 @@ All notable changes to this repo are recorded here.
 - Restored AviSynth+ 3.7.5 x86/x64 on the current Windows 11 installation from a local installer whose size and SHA-256 matched the official GitHub release asset.
 - Verified x86/x64 runtime DLLs and HKLM plugin registrations, achieved a clean `Test-EncodeEnvironment.ps1` result, and runtime-tested `BlankClip`, preserved FFMS2 `FFVideoSource`, the exact QTGMC recipe, and QTGMC-to-`h264_nvenc` MP4 encoding.
 - Revalidated the preserved QTGMC hash manifest and complete `AviSynth+.rar` integrity after installation; the custom payload and safety archive remained unchanged.
+- Completed the real-input recovery baseline with a bottom-field-first MPEG-2 sample through the restored Explorer context menu; verified progressive H.264/AAC output metadata, hashes, full error-strict decode, persisted settings, and user visual acceptance.
 
 ## 2026-08-24
 
