@@ -92,6 +92,7 @@ if (-not [string]::Equals($extension, '.mp4', [StringComparison]::OrdinalIgnoreC
 }
 
 $ffprobe = Resolve-RequiredCommand -Name 'ffprobe'
+$pwsh = Resolve-RequiredCommand -Name 'pwsh'
 $metadataJson = & $ffprobe -hide_banner -v error -show_format -show_streams -of json $resolvedInputPath
 if ($LASTEXITCODE -ne 0) {
     throw "ffprobe metadata read failed for '$resolvedInputPath'."
@@ -143,6 +144,9 @@ if (-not $UseSettsRepair) {
 
 if ($OutputPath) {
     $resolvedOutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+    if (-not [string]::Equals([IO.Path]::GetExtension($resolvedOutputPath), '.mp4', [StringComparison]::OrdinalIgnoreCase)) {
+        throw "OutputPath must use the .mp4 extension: $resolvedOutputPath"
+    }
     $outputDirectory = [IO.Path]::GetDirectoryName($resolvedOutputPath)
     if (-not (Test-Path -LiteralPath $outputDirectory)) {
         New-Item -ItemType Directory -Path $outputDirectory | Out-Null
@@ -159,7 +163,7 @@ if ($NoVerify) {
     $repairArgs += '-NoVerify'
 }
 
-& pwsh.exe @repairArgs
+& $pwsh @repairArgs
 if ($LASTEXITCODE -ne 0) {
     throw "MP4 disguised TS repair failed with exit code $LASTEXITCODE."
 }

@@ -24,7 +24,12 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Workflow | Artifacts | Dependency/state | Next decision |
 | --- | --- | --- | --- |
 | Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Legacy ASFBin is present but unsigned and has a non-commercial/evaluation license boundary; menu is not installed | Decide whether to replace simple joins with FFmpeg or explicitly retain ASFBin's specialized damaged-ASF behavior |
-| MP4 file containing TS data | `Repair-Mp4DisguisedTs.ps1` | FFmpeg/ffprobe available; terminal-only | Keep terminal-only until a real repeated use case justifies a menu |
+
+## Supported Terminal-Only Workflows
+
+| Workflow | Artifact | Current evidence |
+| --- | --- | --- |
+| Repair `.mp4` filename containing MPEG-TS | `Repair-Mp4DisguisedTs.ps1` | 25 real assertions in both shells: normal MP4 no-op, disguised-TS repair, video/audio validation, custom output, source/collision preservation, and invalid/missing input cleanup |
 
 ## Diagnostics and Prototypes — Do Not Install Yet
 
