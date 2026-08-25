@@ -9,11 +9,15 @@
 .EXAMPLE
     .\Verify-VideoIntegrity.ps1 -Path "D:\Users\joty79\Desktop\1.mp4"
 #>
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     [ValidateScript({ Test-Path $_ })]
     [string]$Path
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).Path
 if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
@@ -56,8 +60,8 @@ while (-not $reader.EndOfStream) {
 
     # Capture H.264 stream packet and slice validation warnings/errors
     if ($line -match "Invalid NAL unit size|missing picture|corrupt|error|invalid|failed") {
-        # Ignore hwaccel or device warnings if they slip through
-        if ($line -notmatch "hwaccel|device|format") {
+        # Hardware/device setup warnings are unrelated to packet integrity.
+        if ($line -notmatch "hwaccel|device") {
             Write-Host "❌ CORRUPTION: $line" -ForegroundColor Red
             $corruptions.Add($line)
         }
@@ -80,9 +84,10 @@ if ($ffmpegExitCode -ne 0) {
 }
 
 if ($corruptions.Count -eq 0) {
-    Write-Host "✅ No packet or container corruptions detected! The file structure is healthy." -ForegroundColor Green
+    Write-Host "✅ No packet or container warnings were detected by this fast copy-mode scan." -ForegroundColor Green
 } else {
     Write-Host "⚠️ Warning: Found $($corruptions.Count) packet corruption errors!" -ForegroundColor DarkYellow
-    Write-Host "💡 Avidemux will likely crash when opening this file." -ForegroundColor Yellow
+    Write-Host "💡 Avidemux may reject or crash on this file." -ForegroundColor Yellow
     Write-Host "💡 Suggestion: Run remuxing or NVENC transcode on this file to clean/repair it." -ForegroundColor Yellow
+    exit 2
 }

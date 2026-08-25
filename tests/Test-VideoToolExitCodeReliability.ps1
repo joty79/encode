@@ -140,7 +140,15 @@ public static class FakeVideoTool
     }
     Assert-Condition ($verifyFailure.ExitCode -ne 0) 'Verify-VideoIntegrity must fail when ffmpeg exits nonzero.'
     Assert-Condition ($verifyFailure.Combined -match 'simulated ffmpeg input failure') 'Verify-VideoIntegrity must preserve ffmpeg stderr.'
-    Assert-Condition ($verifyFailure.Combined -notmatch 'file structure is healthy') 'Verify-VideoIntegrity must not report healthy after ffmpeg failure.'
+    Assert-Condition ($verifyFailure.Combined -notmatch 'No packet or container warnings') 'Verify-VideoIntegrity must not report healthy after ffmpeg failure.'
+
+    $verifyCorruption = Invoke-VideoScript -ScriptPath $verifyScript -ArgumentList @('-Path', $inputPath) -Environment @{
+        FAKE_FFMPEG_EXIT   = '0'
+        FAKE_FFMPEG_STDERR = 'Invalid NAL unit size (999 > 10)'
+    }
+    Assert-Condition ($verifyCorruption.ExitCode -ne 0) 'Verify-VideoIntegrity must return nonzero when corruption is detected even if ffmpeg exits zero.'
+    Assert-Condition ($verifyCorruption.Combined -match 'CORRUPTION.*Invalid NAL unit size') 'Verify-VideoIntegrity must report the detected corruption.'
+    Assert-Condition ($verifyCorruption.Combined -notmatch 'No packet or container warnings') 'Detected corruption must not report a healthy fast scan.'
 
     $cutProbeFailure = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath, '-Cuts', '00:05') -Environment @{
         FAKE_FFPROBE_EXIT   = '8'
@@ -184,7 +192,7 @@ public static class FakeVideoTool
         FAKE_FFMPEG_EXIT = '0'
     }
     Assert-Condition ($verifySuccess.ExitCode -eq 0) 'Verify-VideoIntegrity clean path must still succeed.'
-    Assert-Condition ($verifySuccess.Combined -match 'file structure is healthy') 'Verify-VideoIntegrity clean path must still report healthy.'
+    Assert-Condition ($verifySuccess.Combined -match 'No packet or container warnings') 'Verify-VideoIntegrity clean path must still report a clean fast scan.'
 
     $cutSuccess = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath, '-Cuts', '00:05') -Environment @{
         FAKE_FFPROBE_EXIT      = '0'
@@ -214,7 +222,7 @@ public static class FakeVideoTool
     $missingInput = Join-Path $tempRoot 'missing.mp4'
     $missingVerifyResult = Invoke-VideoScript -ScriptPath $verifyScript -ArgumentList @('-Path', $missingInput)
     Assert-Condition ($missingVerifyResult.ExitCode -ne 0) 'Verify-VideoIntegrity must fail for a missing input path.'
-    Assert-Condition ($missingVerifyResult.Combined -notmatch 'file structure is healthy') 'Missing input must not report a healthy integrity result.'
+    Assert-Condition ($missingVerifyResult.Combined -notmatch 'No packet or container warnings') 'Missing input must not report a healthy integrity result.'
 
     $missingInputResult = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $missingInput)
     Assert-Condition ($missingInputResult.ExitCode -ne 0) 'Detect-BadCuts must fail for a missing input path.'

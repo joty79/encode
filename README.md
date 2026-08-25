@@ -56,7 +56,7 @@ pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\source_video.mp4' -Cut
 pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\saved_video.mp4' -UseGPU
 ```
 
-Παράδειγμα 3: Ακαριαίος έλεγχος ακεραιότητας κοντέινερ και πακέτων βίντεο χωρίς αποκωδικοποίηση (διαπίστωση αν θα κρασάρει το Avidemux):
+Παράδειγμα 3: Γρήγορος έλεγχος κοντέινερ και packet/NAL structure χωρίς αποκωδικοποίηση. Δεν αντικαθιστά full decode, αλλά εντοπίζει structural corruptions που μπορεί να απορρίψει το Avidemux:
 ```powershell
 pwsh -File '.\Video\Verify-VideoIntegrity.ps1' -Path 'C:\Path\To\video.mp4'
 ```
