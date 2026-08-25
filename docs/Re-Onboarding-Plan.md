@@ -25,7 +25,7 @@ Completed and pushed on `codex/re-onboard-encode`:
 - Recorded the real-input golden baseline, including exact settings, input/output hashes, media metadata, full decode validation, and user visual acceptance.
 - Manually restored and runtime-verified the classic Explorer actions for direct video encoding, silent queue addition, and queue execution.
 - Verified successful queue cleanup and failed-item retention. Invalid media now stops with a focused ffprobe failure instead of cascading metadata parse errors.
-- Parsed all 34 PowerShell sources and passed all four test suites in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+- Parsed all PowerShell sources and passed all five test suites in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
 
 Current limitations and remaining work:
 

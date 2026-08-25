@@ -14,12 +14,12 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Add to video queue | `add_to_queue.ps1`, `silent_runner.vbs`, `add_to_queue.reg` | Real silent `wscript` launch queued a temporary sample |
 | Run video queue | `run_queue.ps1`, `run_queue.reg` | Successful QTGMC batch cleared the entry; invalid media returned nonzero and remained queued |
 | Media metadata Inspector | `inspector\inspect.ps1`, `inspector\inspect.reg`, `inspector\lib\Metrics.ps1`, `Policy.ps1`, `render.ps1` | Valid MPG and TS rendering; invalid input returns nonzero; mixed folder continues after failure; `.ts` menu added |
+| Remux MKV to MP4 | `RemuxToMP4.ps1`, `RemuxToMP4.reg` | Real AAC stream-copy and PCM-to-AAC tests; source preserved; existing output unchanged; invalid input leaves no partial MP4 |
 
 ## Pending User-Facing Workflow Review
 
 | Workflow | Artifacts | Dependency/state | Next decision |
 | --- | --- | --- | --- |
-| Remux video to MP4 | `RemuxToMP4.ps1`, `RemuxToMP4.reg` | FFmpeg/ffprobe available | Review next; test compatible audio copy, incompatible audio conversion, overwrite behavior, and failures |
 | Merge matching MP4 + SRT | `Merge-MP4-SRT.ps1`, `Merge-MP4-SRT.reg` | MKVToolNix missing from the recorded path and `PATH` | Recover dependency, then test success/failure and output verification |
 | Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | ASFBin exists at the script's fixed path but is not on `PATH` | Review selection rules, overwrite policy, exit handling, and real join behavior |
 | Convert WebP/AVIF/HEIC | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | ImageMagick `magick` missing; FFmpeg available | Recover ImageMagick, then test static and animated inputs without overwriting existing output |
