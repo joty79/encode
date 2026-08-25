@@ -44,6 +44,9 @@ pwsh -File '.\tools\Test-EncodeEnvironment.ps1'
 
 Το command επιστρέφει exit code `1` όταν λείπει required dependency, αλλά δεν εγκαθιστά και δεν αλλάζει τίποτα. Η ανακατασκευή του known-good AviSynth+/QTGMC environment βρίσκεται στο `docs/AviSynth-QTGMC-Recovery.md` και το συνολικό project plan στο `docs/Re-Onboarding-Plan.md`.
 
+Για σύντομη περιγραφή κάθε PowerShell script, classification, test evidence και
+γνωστό regression risk, δες `docs/PowerShell-Tool-Guide.md`.
+
 Για terminal χρήση, τρέξε πρώτα ένα script με `-?` ή άνοιξέ το για να ελέγξεις parameters και hardcoded paths.
 
 Παράδειγμα 1: Προληπτικός έλεγχος των επιθυμητών σημείων κοπής πριν από το save (τρέχει ακαριαία):
