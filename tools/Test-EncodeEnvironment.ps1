@@ -28,7 +28,8 @@ function Add-EnvironmentCheck {
 function Find-CommandPath {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
-        [string[]]$KnownPaths = @()
+        [string[]]$KnownPaths = @(),
+        [string[]]$KnownPatterns = @()
     )
 
     $command = Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -42,6 +43,15 @@ function Find-CommandPath {
         }
     }
 
+    foreach ($knownPattern in $KnownPatterns) {
+        $candidate = Get-ChildItem -Path $knownPattern -File -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+        if ($candidate) {
+            return $candidate.FullName
+        }
+    }
+
     return $null
 }
 
@@ -49,10 +59,11 @@ function Test-CommandAvailable {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
         [Parameter(Mandatory = $true)][bool]$Required,
-        [string[]]$KnownPaths = @()
+        [string[]]$KnownPaths = @(),
+        [string[]]$KnownPatterns = @()
     )
 
-    $commandPath = Find-CommandPath -Name $Name -KnownPaths $KnownPaths
+    $commandPath = Find-CommandPath -Name $Name -KnownPaths $KnownPaths -KnownPatterns $KnownPatterns
     Add-EnvironmentCheck -Name "Command: $Name" -Required $Required -Passed ($null -ne $commandPath) `
         -Details $(if ($commandPath) { $commandPath } else { 'Not found on PATH or at a known installation path' })
     return $commandPath
@@ -64,7 +75,8 @@ $ffmpegPath = Test-CommandAvailable -Name 'ffmpeg' -Required $true
 [void](Test-CommandAvailable -Name 'wt' -Required $false)
 [void](Test-CommandAvailable -Name 'mkvmerge' -Required $false -KnownPaths 'C:\Program Files\MKVToolNix\mkvmerge.exe')
 [void](Test-CommandAvailable -Name 'mkvextract' -Required $false -KnownPaths 'C:\Program Files\MKVToolNix\mkvextract.exe')
-[void](Test-CommandAvailable -Name 'magick' -Required $false)
+[void](Test-CommandAvailable -Name 'magick' -Required $false `
+    -KnownPatterns 'C:\Program Files\ImageMagick-*\magick.exe')
 [void](Test-CommandAvailable -Name 'seconv' -Required $false)
 
 if ($ffmpegPath) {

@@ -22,7 +22,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Workflow | Artifacts | Dependency/state | Next decision |
 | --- | --- | --- | --- |
 | Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Legacy ASFBin is present but unsigned and has a non-commercial/evaluation license boundary; menu is not installed | Decide whether to replace simple joins with FFmpeg or explicitly retain ASFBin's specialized damaged-ASF behavior |
-| Convert WebP/AVIF/HEIC | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | ImageMagick `magick` missing; FFmpeg available | Recover ImageMagick, then test static and animated inputs without overwriting existing output |
+| Convert WebP/AVIF/HEIC | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | ImageMagick recovered; rewritten script passed real static/animated and failure tests; menu not yet installed | Approve the Limited ImageMagick policy, then import and read back the reviewed menu |
 | TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `Ts-Timestamp-Remux.md` | FFmpeg/ffprobe available; safety and smoke tests pass | Review all six menu actions and real problem samples before Registry import |
 | MP4 file containing TS data | `Repair-Mp4DisguisedTs.ps1` | FFmpeg/ffprobe available; terminal-only | Keep terminal-only until a real repeated use case justifies a menu |
 
@@ -65,7 +65,7 @@ Do not infer intended behavior from their names. Decide whether to populate or r
 | AviSynth+ 3.7.5 / QTGMC / FFMS2 | Restored and runtime-verified |
 | ASFBin | v1.8.3.934 (2012) at `C:\Program Files\CutAssist\asfbin\asfbin.exe`; unsigned, not on `PATH`, license decision pending |
 | MKVToolNix | v101.0 x64 installed at `C:\Program Files\MKVToolNix`; signed CLI tools verified; not on `PATH` |
-| ImageMagick | `magick` missing from `PATH` |
+| ImageMagick | v7.1.2-30 Q16-HDRI x64 installed and added to machine `PATH`; Open policy remains active pending explicit Limited-policy approval |
 
 ### MKVToolNix Recovery Evidence
 
@@ -85,6 +85,18 @@ Do not infer intended behavior from their names. Decide whether to populate or r
 - Installed ASFBin reports v1.8.3.934, was built in 2012, is not Authenticode-signed, and its bundled documentation states that it is free for non-commercial use while the executable help says evaluation use. No terms were accepted or interpreted by the agent.
 - A synthetic two-part WMV test proved that FFmpeg 9 can concatenate compatible WMV2/WMA2 inputs by stream copy into a valid ASF/WMV output with both streams and a clean full decode.
 - The FFmpeg test does not prove equivalence to ASFBin's specialized damaged-ASF recovery behavior. Do not restore this menu until the intended use and dependency choice are explicit.
+
+### ImageMagick and Smart Image Conversion Evidence
+
+- Official installer: `D:\Programs\Video\ImageMagick-7.1.2-30-Q16-HDRI-x64-dll.exe`, 24,180,688 bytes.
+- SHA-256: `345B11696BCAD86DE188CE2FD94DCC1EEEACABC981BBE8752FA029B9B5F4A10D`.
+- Authenticode: `Valid`; signer `ImageMagick Studio LLC`.
+- Install path/runtime: `C:\Program Files\ImageMagick-7.1.2-Q16-HDRI\magick.exe`, v7.1.2-30; machine `PATH` contains the application directory.
+- Delegate checks confirm WebP read/write, AVIF read/write, and HEIC/HEIF read support. The user completed the interactive installer/legal choices.
+- The installer left the Open ImageMagick security policy active. The bundled official Limited policy was tested non-mutating against WebP and AVIF and passed, but it has not been applied without explicit user approval. The script independently enforces focused thread, memory, map, disk, and time limits.
+- The rewritten workflow preserves static sources, refuses existing outputs, validates JPG/MP4 results, performs full decode validation for animation, and continues mixed-folder work while returning nonzero for any failure.
+- A variable-delay two-frame WebP retained both frames and its 0.600-second timing when converted directly by FFmpeg instead of the legacy fixed-25-fps PNG extraction path.
+- `tests\Test-ConvertSmartImageSafety.ps1` passes 25 real assertions under PowerShell 7 and Windows PowerShell 5.1. The reviewed Registry integration is prepared but not installed yet.
 
 ## Agreed Order
 
