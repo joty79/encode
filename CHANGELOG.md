@@ -11,6 +11,7 @@ All notable changes to this repo are recorded here.
 - Restored the video queue Explorer menus and runtime-verified the real silent-add-to-queue path, successful QTGMC batch encoding and queue cleanup, plus failed-item retention. Hardened invalid-video metadata probing so ffprobe failures stop with one focused error instead of cascading null and divide-by-zero errors.
 - Reviewed and restored the read-only media Inspector, added `.ts` file/folder discovery and context-menu integration, and made failed or invalid ffprobe results return nonzero while mixed-folder inspection continues. Added a canonical Video tool inventory and deferred installer work until the Video context-menu set is fully reviewed.
 - Reviewed and restored the MKV-to-MP4 remux menu; added explicit existing-output refusal, nonzero failure exits, partial-output cleanup, ffprobe validation, and context-only pause behavior. Real FFmpeg tests cover compatible AAC copy, PCM-to-AAC conversion, invalid input, and source/output preservation.
+- Recovered signed MKVToolNix v101.0 from the official Windows release and reviewed/restored the matching MP4+SRT merge menu. The merge now enforces nonzero failures, existing-output preservation, partial cleanup, and validated video+subtitle tracks; real tests cover success, missing SRT, invalid video, and source preservation. The environment preflight now recognizes MKVToolNix at its standard path, and the Inspector helpers parse under both PowerShell 7 and Windows PowerShell 5.1.
 
 ## 2026-08-24
 

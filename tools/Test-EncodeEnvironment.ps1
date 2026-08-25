@@ -26,25 +26,35 @@ function Add-EnvironmentCheck {
 }
 
 function Find-CommandPath {
-    param([Parameter(Mandatory = $true)][string]$Name)
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [string[]]$KnownPaths = @()
+    )
 
     $command = Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($null -eq $command) {
-        return $null
+    if ($null -ne $command) {
+        return $command.Source
     }
 
-    return $command.Source
+    foreach ($knownPath in $KnownPaths) {
+        if (Test-Path -LiteralPath $knownPath -PathType Leaf) {
+            return $knownPath
+        }
+    }
+
+    return $null
 }
 
 function Test-CommandAvailable {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
-        [Parameter(Mandatory = $true)][bool]$Required
+        [Parameter(Mandatory = $true)][bool]$Required,
+        [string[]]$KnownPaths = @()
     )
 
-    $commandPath = Find-CommandPath -Name $Name
+    $commandPath = Find-CommandPath -Name $Name -KnownPaths $KnownPaths
     Add-EnvironmentCheck -Name "Command: $Name" -Required $Required -Passed ($null -ne $commandPath) `
-        -Details $(if ($commandPath) { $commandPath } else { 'Not found on PATH' })
+        -Details $(if ($commandPath) { $commandPath } else { 'Not found on PATH or at a known installation path' })
     return $commandPath
 }
 
@@ -52,8 +62,8 @@ function Test-CommandAvailable {
 $ffmpegPath = Test-CommandAvailable -Name 'ffmpeg' -Required $true
 [void](Test-CommandAvailable -Name 'ffprobe' -Required $true)
 [void](Test-CommandAvailable -Name 'wt' -Required $false)
-[void](Test-CommandAvailable -Name 'mkvmerge' -Required $false)
-[void](Test-CommandAvailable -Name 'mkvextract' -Required $false)
+[void](Test-CommandAvailable -Name 'mkvmerge' -Required $false -KnownPaths 'C:\Program Files\MKVToolNix\mkvmerge.exe')
+[void](Test-CommandAvailable -Name 'mkvextract' -Required $false -KnownPaths 'C:\Program Files\MKVToolNix\mkvextract.exe')
 [void](Test-CommandAvailable -Name 'magick' -Required $false)
 [void](Test-CommandAvailable -Name 'seconv' -Required $false)
 

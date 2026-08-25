@@ -25,13 +25,13 @@ Completed and pushed on `codex/re-onboard-encode`:
 - Recorded the real-input golden baseline, including exact settings, input/output hashes, media metadata, full decode validation, and user visual acceptance.
 - Manually restored and runtime-verified the classic Explorer actions for direct video encoding, silent queue addition, and queue execution.
 - Verified successful queue cleanup and failed-item retention. Invalid media now stops with a focused ffprobe failure instead of cascading metadata parse errors.
-- Parsed all PowerShell sources and passed all five test suites in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+- Parsed all 36 PowerShell sources and passed all seven test scripts in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
 
 Current limitations and remaining work:
 
 - The three restored video/queue context-menu groups were imported from legacy `.reg` files and are not yet owned by a project installer or uninstaller.
 - The `.reg` files still contain machine-specific absolute checkout and icon paths.
-- MKVToolNix, ImageMagick, and Subtitle Edit CLI are not currently on `PATH`; they are optional for the verified encode/QTGMC path but required by other project slices.
+- MKVToolNix v101.0 is installed at its standard path and is recognized there by the preflight, though it is not on `PATH`; ImageMagick and Subtitle Edit CLI remain unavailable. They are optional for the verified encode/QTGMC path but required by other project slices.
 - Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
 
 The installer milestone is deferred until the `Video` folder review and context-menu redesign are complete. The immediate milestone is to characterize every Video workflow, separate supported utilities from prototypes/testing artifacts, recover only required dependencies, and restore approved menus incrementally. `Video\Tool-Inventory.md` owns the live classification and order.

@@ -34,23 +34,23 @@ function Get-BitratePolicy {
     # --- Normal bitrate ceilings by resolution ---
     if ($Height -ge 2160) {
         # 4K
-        $normalMax = ($fpsBucket -eq "High") ? 35 : 25
+        $normalMax = if ($fpsBucket -eq "High") { 35 } else { 25 }
     }
     elseif ($Height -ge 1080) {
         # 1080p (reference)
-        $normalMax = ($fpsBucket -eq "High") ? 25 : 12
+        $normalMax = if ($fpsBucket -eq "High") { 25 } else { 12 }
     }
     elseif ($Height -ge 720) {
         # 720p class
-        $normalMax = ($fpsBucket -eq "High") ? 12 : 6
+        $normalMax = if ($fpsBucket -eq "High") { 12 } else { 6 }
     }
     elseif ($Height -gt 480) {
         # In-between (540p / 576p etc.)
-        $normalMax = ($fpsBucket -eq "High") ? 8 : 4
+        $normalMax = if ($fpsBucket -eq "High") { 8 } else { 4 }
     }
     else {
         # 480p and lower
-        $normalMax = ($fpsBucket -eq "High") ? 4 : 2
+        $normalMax = if ($fpsBucket -eq "High") { 4 } else { 2 }
     }
 
     # --- Tier thresholds ---

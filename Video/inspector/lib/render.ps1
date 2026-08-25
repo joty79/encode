@@ -30,10 +30,10 @@ function Write-Centered-Cell {
 
     Write-Host (" " * $padLeft) -NoNewline
 
-    $color = (
+    $color = if (
 		$Value -like "*≠*" -or
 		$Unit  -like "*VFR*"
-	) ? "Red" : "Green"
+	) { "Red" } else { "Green" }
 
 	if ($Value) { Write-Host $Value -ForegroundColor $color -NoNewline }
 
