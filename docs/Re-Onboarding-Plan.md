@@ -15,6 +15,27 @@ The video-integrity and MPEG-TS timestamp/repair tooling added in commit `fb33b0
 - Separate environment/setup failures from encoding-logic failures.
 - Use copies or controlled samples for any workflow that moves or removes source files.
 
+## Current Checkpoint — 2026-08-25
+
+Completed and pushed on `codex/re-onboard-encode`:
+
+- Hardened source cleanup, no-audio moves, inspection tools, the video encoder, and queue failure handling with focused regression coverage.
+- Restored AviSynth+ 3.7.5 x86/x64 and the preserved x64 QTGMC/FFMS2 plugin environment on Windows 11.
+- Verified the FFmpeg-to-AviSynth-to-QTGMC-to-NVENC path with synthetic media and a representative bottom-field-first MPEG-2 input.
+- Recorded the real-input golden baseline, including exact settings, input/output hashes, media metadata, full decode validation, and user visual acceptance.
+- Manually restored and runtime-verified the classic Explorer actions for direct video encoding, silent queue addition, and queue execution.
+- Verified successful queue cleanup and failed-item retention. Invalid media now stops with a focused ffprobe failure instead of cascading metadata parse errors.
+- Parsed all 34 PowerShell sources and passed all four test suites in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+
+Current limitations and remaining work:
+
+- The three restored video/queue context-menu groups were imported from legacy `.reg` files and are not yet owned by a project installer or uninstaller.
+- The `.reg` files still contain machine-specific absolute checkout and icon paths.
+- MKVToolNix, ImageMagick, and Subtitle Edit CLI are not currently on `PATH`; they are optional for the verified encode/QTGMC path but required by other project slices.
+- Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
+
+Next milestone: implement the installation architecture for the proven video encode/queue slice first. It must provide selectable install/uninstall actions, prefer per-user Explorer keys, derive paths from the actual checkout, verify dependencies, read back exact Registry values, and remove only installer-owned keys.
+
 ## Phases
 
 ### 1. Environment Recovery
