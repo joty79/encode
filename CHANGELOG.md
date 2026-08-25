@@ -2,6 +2,12 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-08-26
+
+- Restored the official standalone Subtitle Edit SeConv v5.1.0 x64 asset to `C:\Program Files\Subtitle Edit CLI`. The preserved ZIP exactly matches the size and SHA-256 published by the official GitHub release API; runtime, embedded product version, license, unsigned status, and the upstream `--version` banner inconsistency are recorded in `subtitle\README.md`.
+- Replaced the hardcoded legacy VTT runner with a safe `Convert-ToSrt.ps1` workflow that resolves SeConv at its current installation path, preserves sources, refuses collisions, converts through a unique temporary directory, and validates the final SRT.
+- Reworked MKV subtitle extraction to inspect tracks through MKVToolNix and perform a real SeConv text conversion. It now refuses multiple tracks, image/OCR tracks, invalid inputs, existing outputs, and partial results instead of potentially naming ASS or binary data `.srt`. Twenty-eight assertions pass in PowerShell 7 and 5.1; both reviewed Explorer actions were moved from machine-wide `HKCR` to per-user `HKCU\Software\Classes`, imported, and read back exactly.
+
 ## 2026-08-25
 
 - Restored AviSynth+ 3.7.5 x86/x64 on the current Windows 11 installation from a local installer whose size and SHA-256 matched the official GitHub release asset.

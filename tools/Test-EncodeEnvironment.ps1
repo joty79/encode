@@ -77,7 +77,10 @@ $ffmpegPath = Test-CommandAvailable -Name 'ffmpeg' -Required $true
 [void](Test-CommandAvailable -Name 'mkvextract' -Required $false -KnownPaths 'C:\Program Files\MKVToolNix\mkvextract.exe')
 [void](Test-CommandAvailable -Name 'magick' -Required $false `
     -KnownPatterns 'C:\Program Files\ImageMagick-*\magick.exe')
-[void](Test-CommandAvailable -Name 'seconv' -Required $false)
+[void](Test-CommandAvailable -Name 'seconv' -Required $false -KnownPaths @(
+    'C:\Program Files\Subtitle Edit CLI\seconv.exe',
+    'C:\Program Files\Subtitle Edit\seconv.exe'
+))
 
 if ($ffmpegPath) {
     $ffmpegVersionText = (& $ffmpegPath -hide_banner -version 2>&1 | Out-String)

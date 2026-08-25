@@ -15,7 +15,7 @@ The video-integrity and MPEG-TS timestamp/repair tooling added in commit `fb33b0
 - Separate environment/setup failures from encoding-logic failures.
 - Use copies or controlled samples for any workflow that moves or removes source files.
 
-## Current Checkpoint — 2026-08-25
+## Current Checkpoint — 2026-08-26
 
 Completed and pushed on `codex/re-onboard-encode`:
 
@@ -25,21 +25,23 @@ Completed and pushed on `codex/re-onboard-encode`:
 - Recorded the real-input golden baseline, including exact settings, input/output hashes, media metadata, full decode validation, and user visual acceptance.
 - Manually restored and runtime-verified the classic Explorer actions for direct video encoding, silent queue addition, and queue execution.
 - Verified successful queue cleanup and failed-item retention. Invalid media now stops with a focused ffprobe failure instead of cascading metadata parse errors.
-- Parsed all 40 PowerShell sources and passed all twelve test scripts in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+- Parsed all 43 PowerShell sources and passed all thirteen test scripts in both PowerShell 7 and Windows PowerShell 5.1. The required encode environment preflight reports `READY`.
+- Restored official Subtitle Edit SeConv v5.1.0 as a separate CLI installation and characterized safe VTT conversion plus single-text-track MKV extraction with 28 assertions in both PowerShell hosts.
 
 Current limitations and remaining work:
 
 - The three restored video/queue context-menu groups were imported from legacy `.reg` files and are not yet owned by a project installer or uninstaller.
 - The `.reg` files still contain machine-specific absolute checkout and icon paths.
-- MKVToolNix v101.0 is installed at its standard path and is recognized there by the preflight, though it is not on `PATH`. ImageMagick v7.1.2-30 uses the verified bundled Limited policy, and its reviewed smart-conversion menu is installed. Subtitle Edit CLI remains unavailable.
-- Audio, subtitle, icon, no-audio, and recent integrity/TS workflows still need their own representative characterization and installation integration.
+- MKVToolNix v101.0 and Subtitle Edit SeConv v5.1.0 are installed at standard project-known paths without requiring `PATH`. ImageMagick v7.1.2-30 uses the verified bundled Limited policy, and its reviewed smart-conversion menu is installed.
+- Audio, icon, no-audio, and remaining installation integration still need their own representative characterization.
 
 The `Video` folder review is complete and `Video\Tool-Inventory.md` owns its final
 re-onboarding classification. The legacy WMV/ASFBin workflow is retained but not
 installed, the damaged-H.264 tool remains a characterized terminal-only prototype,
-and the empty Inspector files are inert historical scaffolding. The immediate next
-milestone is Subtitle Edit CLI recovery and subtitle-helper characterization. The
-installer milestone remains deferred until the broader context-menu redesign.
+and the empty Inspector files are inert historical scaffolding. Subtitle Edit CLI
+recovery and subtitle-helper characterization are complete; their two reviewed
+menus are installed per-user and verified by Registry readback. The installer
+milestone remains deferred until the broader context-menu redesign.
 
 ## Phases
 

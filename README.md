@@ -30,6 +30,7 @@
 | Tools | Τα media scripts μπορεί να απαιτούν local tools όπως `ffmpeg`/`ffprobe`, ανάλογα με το script. |
 | Interlaced video | Το legacy QTGMC path απαιτεί σωστά registered AviSynth+ και τα preserved x64 QTGMC plugins. Δες `docs/AviSynth-QTGMC-Recovery.md`. |
 | Registry | Τα `.reg` files αλλάζουν Windows Explorer context menus και θέλουν προσεκτικό review πριν από import. |
+| Subtitle conversion | Τα subtitle helpers χρησιμοποιούν MKVToolNix και το ξεχωριστό official Subtitle Edit `seconv` CLI. Δες `subtitle/README.md`. |
 
 ## Usage
 
