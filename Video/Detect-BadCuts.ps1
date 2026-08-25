@@ -1,12 +1,13 @@
 <#
 .SYNOPSIS
-    Detects bad keyframe cuts/joins in MP4 video files using GPU decoding or instant keyframe matching.
+    Checks proposed copy-mode cuts against keyframes and can run a full decode integrity scan.
 .DESCRIPTION
     Supports two modes:
     1. Proactive Cut Checker (-Cuts): Instantly checks if proposed cut timestamps (e.g. "01:47", "02:12")
        align with keyframes in the source video. Runs in under a second and suggests the nearest keyframes.
-    2. Video Analyzer: Decodes the video using GPU acceleration (-UseGPU) to scan for scene cuts that landed
-       on non-keyframes in real-time, showing live progress.
+    2. Video Analyzer: Decodes the video, optionally using GPU acceleration (-UseGPU), reports decoding
+       warnings/errors, and lists scene transitions on non-keyframes as informational observations.
+       A natural scene transition on a non-keyframe is not by itself proof of a bad edit.
 .PARAMETER Path
     The path to the input MP4 video file.
 .PARAMETER Cuts
@@ -15,7 +16,7 @@
 .PARAMETER UseGPU
     Enables hardware-accelerated decoding (-hwaccel auto) for the live scanning mode.
 .PARAMETER SceneThreshold
-    Visual scene change sensitivity threshold. Default is 0.12.
+    Sensitivity for the informational scene-transition report. Default is 0.12.
 .EXAMPLE
     # Proactive Cut Check (Instant)
     .\Detect-BadCuts.ps1 -Path "D:\Videos\source.mp4" -Cuts "01:47", "02:12", "05:56"
@@ -23,6 +24,7 @@
     # Full Scan Check (Live Progress)
     .\Detect-BadCuts.ps1 -Path "D:\Videos\saved.mp4" -UseGPU
 #>
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     [string]$Path,
@@ -34,8 +36,12 @@ param(
     [switch]$UseGPU,
 
     [Parameter(Mandatory = $false)]
+    [ValidateRange(0.0, 1.0)]
     [double]$SceneThreshold = 0.12
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).Path
 if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
@@ -52,11 +58,11 @@ try {
 function Convert-TimeToSeconds ([string]$timeStr) {
     $timeStr = $timeStr.Trim()
     if ($timeStr -match "^(\d+):(\d+):([\d\.]+)$") {
-        return ([int]$Matches[1] * 3600) + ([int]$Matches[2] * 60) + [double]$Matches[3]
+        return ([int]$Matches[1] * 3600) + ([int]$Matches[2] * 60) + [double]::Parse($Matches[3], [Globalization.CultureInfo]::InvariantCulture)
     } elseif ($timeStr -match "^(\d+):([\d\.]+)$") {
-        return ([int]$Matches[1] * 60) + [double]$Matches[2]
+        return ([int]$Matches[1] * 60) + [double]::Parse($Matches[2], [Globalization.CultureInfo]::InvariantCulture)
     } elseif ($timeStr -match "^[\d\.]+$") {
-        return [double]$timeStr
+        return [double]::Parse($timeStr, [Globalization.CultureInfo]::InvariantCulture)
     }
     return $null
 }
@@ -90,7 +96,7 @@ if ($Cuts -and $Cuts.Count -gt 0) {
 
     foreach ($kf in $keyframesOutput) {
         $val = 0.0
-        if ([double]::TryParse($kf, [ref]$val)) {
+        if ([double]::TryParse($kf, [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$val)) {
             $keyframes.Add($val)
         }
     }
@@ -105,11 +111,13 @@ if ($Cuts -and $Cuts.Count -gt 0) {
 
     $tolerance = 0.08 # Tolerance in seconds (approx. 2 frames at 25fps)
     $badCutsCount = 0
+    $invalidCutsCount = 0
 
     foreach ($cutStr in $Cuts) {
         $cutSec = Convert-TimeToSeconds $cutStr
         if ($null -eq $cutSec) {
             Write-Host "⚠️ Invalid time format: $cutStr (Use 'MM:SS', 'HH:MM:SS', or seconds)" -ForegroundColor Yellow
+            $invalidCutsCount++
             continue
         }
 
@@ -139,9 +147,17 @@ if ($Cuts -and $Cuts.Count -gt 0) {
 
     Write-Host "------------------------------------------------------------------"
     if ($badCutsCount -eq 0) {
-        Write-Host "✅ All specified cuts are properly aligned with keyframes! You can safely save in Copy mode." -ForegroundColor Green
+        if ($invalidCutsCount -eq 0) {
+            Write-Host "✅ All specified cuts are properly aligned with keyframes! You can safely save in Copy mode." -ForegroundColor Green
+        }
     } else {
         Write-Host "⚠️ Warning: Found $badCutsCount misaligned cuts. Adjust markers to the suggested timestamps in Avidemux." -ForegroundColor Red
+    }
+    if ($invalidCutsCount -gt 0) {
+        Write-Host "⚠️ Invalid cut timestamps: $invalidCutsCount." -ForegroundColor Red
+    }
+    if ($badCutsCount -gt 0 -or $invalidCutsCount -gt 0) {
+        exit 2
     }
     return
 }
@@ -174,7 +190,7 @@ if ($ffprobeExitCode -ne 0) {
     }
     throw "Video scan failed because ffprobe exited with code $ffprobeExitCode."
 }
-[double]::TryParse($durationInfo, [ref]$duration) | Out-Null
+[double]::TryParse([string]$durationInfo, [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$duration) | Out-Null
 
 Write-Host "📊 Duration: $duration s | Est. Frames: $totalFrames" -ForegroundColor Gray
 
@@ -184,7 +200,6 @@ if ($UseGPU) {
     $hwaccelArgs = @("-hwaccel", "auto")
 }
 
-$escapedPath = $resolvedPath.Replace(':', '\:').Replace('\', '/')
 $ffmpegArgs = $hwaccelArgs + @("-i", "`"$resolvedPath`"", "-vf", "select=gt(scene\,$SceneThreshold),showinfo", "-f", "null", "-")
 
 try {
@@ -200,7 +215,7 @@ $processStartInfo.RedirectStandardError = $true
 $processStartInfo.UseShellExecute = $false
 $processStartInfo.CreateNoWindow = $true
 
-Write-Host "🎬 Decoding stream and scanning for bad cuts in real-time..." -ForegroundColor Cyan
+Write-Host "🎬 Decoding stream and reporting scene transitions in real-time..." -ForegroundColor Cyan
 
 try {
     $process = [System.Diagnostics.Process]::Start($processStartInfo)
@@ -209,7 +224,7 @@ try {
 }
 $reader = $process.StandardError
 
-$badCuts = [System.Collections.Generic.List[PSObject]]::new()
+$sceneTransitions = [System.Collections.Generic.List[PSObject]]::new()
 $decodeErrors = [System.Collections.Generic.List[string]]::new()
 $stderrLines = [System.Collections.Generic.List[string]]::new()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -231,14 +246,14 @@ while (-not $reader.EndOfStream) {
 
         if (-not $isKey) {
             $formattedTime = Format-SecondsToTime $pts
-            $badCuts.Add([PSCustomObject]@{
+            $sceneTransitions.Add([PSCustomObject]@{
                 Timestamp = $pts
                 Formatted = $formattedTime
                 Type      = $type
             })
 
-            Write-Progress -Activity "Scanning Video for Bad Cuts" -Completed
-            Write-Host "❌ Bad Cut detected at $formattedTime ($pts s) -> Scene change landed on a non-keyframe ($type-frame)" -ForegroundColor Red
+            Write-Progress -Activity "Decoding Video" -Completed
+            Write-Host "ℹ️ Scene transition at $formattedTime ($pts s) is on a non-keyframe ($type-frame); informational only." -ForegroundColor Cyan
         }
     }
     elseif ($line -match "frame=\s*(\d+)") {
@@ -249,11 +264,11 @@ while (-not $reader.EndOfStream) {
 
         $currentPts = 0.0
         if ($currentTimeStr -match "(\d+):(\d+):([\d\.]+)") {
-            $currentPts = ([int]$Matches[1] * 3600) + ([int]$Matches[2] * 60) + [double]$Matches[3]
+            $currentPts = ([int]$Matches[1] * 3600) + ([int]$Matches[2] * 60) + [double]::Parse($Matches[3], [Globalization.CultureInfo]::InvariantCulture)
         }
 
         $fps = 0.0
-        if ($line -match "fps=\s*([\d\.]+)") { $fps = [double]$Matches[1] }
+        if ($line -match "fps=\s*([\d\.]+)") { $fps = [double]::Parse($Matches[1], [Globalization.CultureInfo]::InvariantCulture) }
 
         $percent = 0
         if ($totalFrames -gt 0) {
@@ -262,7 +277,7 @@ while (-not $reader.EndOfStream) {
             $percent = [math]::Min(100, [int](($currentPts / $duration) * 100))
         }
 
-        Write-Progress -Activity "Scanning Video for Bad Cuts" -Status "Frame: $frameNum | Time: $currentTimeStr | Speed: $fps FPS" -PercentComplete $percent
+        Write-Progress -Activity "Decoding Video" -Status "Frame: $frameNum | Time: $currentTimeStr | Speed: $fps FPS" -PercentComplete $percent
     }
     else {
         if ($line -match "error|corrupt|missing|invalid|failed|slice|pps|sps|poc|reference") {
@@ -272,7 +287,7 @@ while (-not $reader.EndOfStream) {
                         $line -match "device creation"
 
             if (-not $isIgnore) {
-                Write-Progress -Activity "Scanning Video for Bad Cuts" -Completed
+                Write-Progress -Activity "Decoding Video" -Completed
                 Write-Host "⚠️ Decoding Warning/Error: $line" -ForegroundColor DarkYellow
                 $decodeErrors.Add($line)
             }
@@ -283,7 +298,7 @@ while (-not $reader.EndOfStream) {
 $process.WaitForExit()
 $ffmpegExitCode = $process.ExitCode
 $stopwatch.Stop()
-Write-Progress -Activity "Scanning Video for Bad Cuts" -Completed
+Write-Progress -Activity "Decoding Video" -Completed
 
 if ($ffmpegExitCode -ne 0) {
     Write-Host "`n❌ ffmpeg scan failed with exit code $ffmpegExitCode. Diagnostic output:" -ForegroundColor Red
@@ -296,20 +311,21 @@ if ($ffmpegExitCode -ne 0) {
 Write-Host "`n📊 Scan Summary for: $(Split-Path $resolvedPath -Leaf)" -ForegroundColor Cyan
 Write-Host "🔸 Processing Time: $([math]::Round($stopwatch.Elapsed.TotalSeconds, 2)) seconds" -ForegroundColor Gray
 
-if ($badCuts.Count -eq 0 -and $decodeErrors.Count -eq 0) {
-    Write-Host "✅ No decoding errors or visual bad cuts found!" -ForegroundColor Green
+if ($sceneTransitions.Count -eq 0 -and $decodeErrors.Count -eq 0) {
+    Write-Host "✅ Full decode completed without detected decoding errors." -ForegroundColor Green
 } else {
-    if ($badCuts.Count -gt 0) {
-        Write-Host "`n❌ Found $($badCuts.Count) visual cuts not aligned with keyframes:" -ForegroundColor Red
-        foreach ($cut in $badCuts) {
+    if ($sceneTransitions.Count -gt 0) {
+        Write-Host "`nℹ️ Found $($sceneTransitions.Count) scene transitions on non-keyframes (informational; not proof of bad edits):" -ForegroundColor Cyan
+        foreach ($cut in $sceneTransitions) {
             Write-Host "  📍 At $($cut.Formatted) ($($cut.Timestamp) s) -> transition frame type: $($cut.Type)" -ForegroundColor Yellow
         }
     }
 
     if ($decodeErrors.Count -gt 0) {
-        Write-Host "`n⚠️ Found $($decodeErrors.Count) minor bitstream warnings/errors:" -ForegroundColor DarkYellow
+        Write-Host "`n⚠️ Found $($decodeErrors.Count) bitstream/decode warnings or errors:" -ForegroundColor DarkYellow
         $decodeErrors | Select-Object -Unique | ForEach-Object {
             Write-Host "  $_" -ForegroundColor DarkYellow
         }
+        exit 2
     }
 }

@@ -164,7 +164,7 @@ public static class FakeVideoTool
     }
     Assert-Condition ($metadataFailure.ExitCode -ne 0) 'Full scan must fail when metadata ffprobe exits nonzero.'
     Assert-Condition ($metadataFailure.Combined -match 'simulated metadata probe failure') 'Full scan must preserve metadata ffprobe stderr.'
-    Assert-Condition ($metadataFailure.Combined -notmatch 'No decoding errors or visual bad cuts found') 'Full scan must not report success after metadata failure.'
+    Assert-Condition ($metadataFailure.Combined -notmatch 'Full decode completed without detected decoding errors') 'Full scan must not report success after metadata failure.'
 
     $scanFailure = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath) -Environment @{
         FAKE_FFPROBE_EXIT     = '0'
@@ -175,7 +175,7 @@ public static class FakeVideoTool
     }
     Assert-Condition ($scanFailure.ExitCode -ne 0) 'Full scan must fail when ffmpeg exits nonzero.'
     Assert-Condition ($scanFailure.Combined -match 'simulated demuxer failure detail') 'Full scan must preserve unclassified ffmpeg stderr.'
-    Assert-Condition ($scanFailure.Combined -notmatch 'No decoding errors or visual bad cuts found') 'Full scan must not report success after ffmpeg failure.'
+    Assert-Condition ($scanFailure.Combined -notmatch 'Full decode completed without detected decoding errors') 'Full scan must not report success after ffmpeg failure.'
 
     $warningSuccess = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath) -Environment @{
         FAKE_FFPROBE_EXIT      = '0'
@@ -184,7 +184,7 @@ public static class FakeVideoTool
         FAKE_FFMPEG_EXIT       = '0'
         FAKE_FFMPEG_STDERR     = 'corrupt simulated packet warning'
     }
-    Assert-Condition ($warningSuccess.ExitCode -eq 0) 'A completed scan with a detected warning must retain the existing successful process exit behavior.'
+    Assert-Condition ($warningSuccess.ExitCode -ne 0) 'A completed scan with a detected decode warning must return nonzero.'
     Assert-Condition ($warningSuccess.Combined -match 'Decoding Warning/Error') 'A completed scan must still report detected decode warnings.'
     Assert-Condition ($warningSuccess.Combined -notmatch 'Cannot bind parameter.*ForegroundColor') 'Warning output must use a valid ConsoleColor.'
 
@@ -200,6 +200,20 @@ public static class FakeVideoTool
     }
     Assert-Condition ($cutSuccess.ExitCode -eq 0) 'Aligned cut path must still succeed.'
     Assert-Condition ($cutSuccess.Combined -match 'All specified cuts are properly aligned') 'Aligned cut path must retain its success result.'
+
+    $cutMisaligned = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath, '-Cuts', '00:02.5') -Environment @{
+        FAKE_FFPROBE_EXIT      = '0'
+        FAKE_FFPROBE_KEYFRAMES = "0`n5`n"
+    }
+    Assert-Condition ($cutMisaligned.ExitCode -ne 0) 'Misaligned cut path must return nonzero.'
+    Assert-Condition ($cutMisaligned.Combined -match 'BAD CUT') 'Misaligned cut path must report the bad cut.'
+
+    $cutInvalid = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $inputPath, '-Cuts', 'invalid') -Environment @{
+        FAKE_FFPROBE_EXIT      = '0'
+        FAKE_FFPROBE_KEYFRAMES = "0`n5`n"
+    }
+    Assert-Condition ($cutInvalid.ExitCode -ne 0) 'Invalid cut timestamp must return nonzero.'
+    Assert-Condition ($cutInvalid.Combined -match 'Invalid cut timestamps') 'Invalid cut timestamp must be summarized.'
 
     $pwshPath = (Get-Command pwsh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     $inspectorFailure = Invoke-VideoScript -HostPath $pwshPath -ScriptPath $inspectScript -ArgumentList @($inputPath) -Environment @{
@@ -226,7 +240,7 @@ public static class FakeVideoTool
 
     $missingInputResult = Invoke-VideoScript -ScriptPath $detectScript -ArgumentList @('-Path', $missingInput)
     Assert-Condition ($missingInputResult.ExitCode -ne 0) 'Detect-BadCuts must fail for a missing input path.'
-    Assert-Condition ($missingInputResult.Combined -notmatch 'No decoding errors or visual bad cuts found') 'Missing input must not report a healthy full scan.'
+    Assert-Condition ($missingInputResult.Combined -notmatch 'Full decode completed without detected decoding errors') 'Missing input must not report a healthy full scan.'
 
     Write-Host "PASS: $assertionCount assertions validated video tool/input failure handling and retained success behavior."
 } finally {

@@ -51,7 +51,7 @@ Set-Location 'D:\Users\joty79\scripts\encode'
 pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\source_video.mp4' -Cuts "01:47", "02:12", "05:56"
 ```
 
-Παράδειγμα 2: Σάρωση του αποθηκευμένου αρχείου για ανίχνευση ελαττωματικών cuts με χρήση GPU:
+Παράδειγμα 2: Full decode του αποθηκευμένου αρχείου με χρήση GPU για decode errors. Οι scene transitions σε non-keyframes αναφέρονται μόνο πληροφοριακά και δεν αποδεικνύουν από μόνες τους κακό edit:
 ```powershell
 pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\saved_video.mp4' -UseGPU
 ```

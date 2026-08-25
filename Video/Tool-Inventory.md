@@ -31,12 +31,12 @@ The following legacy Registry groups were manually imported and runtime-verified
 | --- | --- | --- |
 | Repair `.mp4` filename containing MPEG-TS | `Repair-Mp4DisguisedTs.ps1` | 25 real assertions in both shells: normal MP4 no-op, disguised-TS repair, video/audio validation, custom output, source/collision preservation, and invalid/missing input cleanup |
 | Fast packet/container integrity scan | `Verify-VideoIntegrity.ps1` | Real healthy H.264 MP4 returns success; deliberately corrupt NAL length returns nonzero even when FFmpeg itself exits zero; explicitly not a full decode |
+| Copy-cut alignment / full decode diagnostic | `Detect-BadCuts.ps1` | 13 real mode assertions plus focused failures in both shells: aligned/misaligned/invalid cuts, healthy full decode, and corrupt NAL diagnostics; scene transitions are explicitly informational |
 
 ## Diagnostics and Prototypes — Do Not Install Yet
 
 | Artifact | Classification | Reason |
 | --- | --- | --- |
-| `Detect-BadCuts.ps1` | Newer diagnostic | Focused failure tests pass; proactive and full-scan modes still need characterization |
 | `Repair-DamagedVideo.ps1` | Saved prototype | Its own help says it is not a universal repair engine; keep terminal-only until independently validated |
 | `Damaged-Video-Repair.md` | Prototype documentation | Owns the limits and evidence for the damaged-H.264 experiment |
 
