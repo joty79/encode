@@ -8,6 +8,7 @@ All notable changes to this repo are recorded here.
 - Verified x86/x64 runtime DLLs and HKLM plugin registrations, achieved a clean `Test-EncodeEnvironment.ps1` result, and runtime-tested `BlankClip`, preserved FFMS2 `FFVideoSource`, the exact QTGMC recipe, and QTGMC-to-`h264_nvenc` MP4 encoding.
 - Revalidated the preserved QTGMC hash manifest and complete `AviSynth+.rar` integrity after installation; the custom payload and safety archive remained unchanged.
 - Completed the real-input recovery baseline with a bottom-field-first MPEG-2 sample through the restored Explorer context menu; verified progressive H.264/AAC output metadata, hashes, full error-strict decode, persisted settings, and user visual acceptance.
+- Restored the video queue Explorer menus and runtime-verified the real silent-add-to-queue path, successful QTGMC batch encoding and queue cleanup, plus failed-item retention. Hardened invalid-video metadata probing so ffprobe failures stop with one focused error instead of cascading null and divide-by-zero errors.
 
 ## 2026-08-24
 

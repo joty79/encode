@@ -126,6 +126,40 @@ $interlaceResult = & $interlaceHarness 'C:\media\idet-test.mpg'
 Assert-Contract -Condition (-not $interlaceResult.Succeeded) -Message 'A failed FFmpeg idet run must not be treated as successful analysis.'
 Assert-Contract -Condition ($interlaceResult.ExitCode -eq 17) -Message 'Get-InterlaceInfo must preserve the FFmpeg exit code.'
 
+$videoInfoFunction = Get-FunctionDefinition -Ast $videoScript.Ast -Name 'Get-VideoInfo'
+$failedVideoInfoHarnessText = @'
+param([string]$InputPath)
+
+function ffprobe {
+    $global:LASTEXITCODE = 19
+}
+'@ + [Environment]::NewLine + $videoInfoFunction.Extent.Text + @'
+
+Get-VideoInfo -InputPath $InputPath
+'@
+$failedVideoInfoHarness = [scriptblock]::Create($failedVideoInfoHarnessText)
+$failedVideoInfo = & $failedVideoInfoHarness 'C:\media\invalid.mpg'
+Assert-Contract -Condition (-not $failedVideoInfo.Succeeded) -Message 'A failed video metadata probe must not be parsed as valid metadata.'
+Assert-Contract -Condition ($failedVideoInfo.ExitCode -eq 19) -Message 'Get-VideoInfo must preserve the ffprobe exit code.'
+
+$malformedVideoInfoHarnessText = @'
+param([string]$InputPath)
+
+function ffprobe {
+    'width=720'
+    'height=480'
+    'r_frame_rate=N/A'
+    $global:LASTEXITCODE = 0
+}
+'@ + [Environment]::NewLine + $videoInfoFunction.Extent.Text + @'
+
+Get-VideoInfo -InputPath $InputPath
+'@
+$malformedVideoInfoHarness = [scriptblock]::Create($malformedVideoInfoHarnessText)
+$malformedVideoInfo = & $malformedVideoInfoHarness 'C:\media\malformed.mpg'
+Assert-Contract -Condition (-not $malformedVideoInfo.Succeeded) -Message 'Incomplete or malformed video metadata must fail cleanly.'
+Assert-Contract -Condition ($malformedVideoInfo.Error -like 'ffprobe returned incomplete*') -Message 'Malformed metadata must report a focused error.'
+
 Assert-Contract -Condition (
     $videoScript.Source -match '(?s)Remove an older output.*Invoke-FFmpegWithProgress.*if \(\$ffmpegExitCode -ne 0\).*Remove-Item -LiteralPath \$output.*continue'
 ) -Message 'A failed FFmpeg run must remove its partial output and skip success reporting.'

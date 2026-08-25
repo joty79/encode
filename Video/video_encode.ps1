@@ -217,21 +217,57 @@ function Get-VideoInfo {
         -select_streams v:0 `
         -show_entries stream=width,height,r_frame_rate,sample_aspect_ratio,display_aspect_ratio `
         -of default=nw=1 "$InputPath"
+    $ffprobeExitCode = $LASTEXITCODE
 
-    $w = ($info | Select-String "width=").Line.Split("=")[1]
-    $h = ($info | Select-String "height=").Line.Split("=")[1]
+    if ($ffprobeExitCode -ne 0) {
+        return @{
+            Succeeded = $false
+            ExitCode  = $ffprobeExitCode
+            Error     = 'ffprobe could not read the first video stream.'
+        }
+    }
 
-    $fpsRaw = ($info | Select-String "r_frame_rate=").Line.Split("=")[1]
-    $n = [double]($fpsRaw.Split("/")[0])
-    $d = [double]($fpsRaw.Split("/")[1])
-    $fps = if ($d -ne 0) { [math]::Round(($n / $d), 2) } else { 0 }
+    $metadata = @{}
+    foreach ($line in @($info)) {
+        $parts = $line -split '=', 2
+        if ($parts.Count -eq 2) {
+            $metadata[$parts[0]] = $parts[1]
+        }
+    }
+
+    $width = 0
+    $height = 0
+    $fpsNumerator = 0.0
+    $fpsDenominator = 0.0
+    $fpsParts = @($metadata['r_frame_rate'] -split '/', 2)
+
+    $metadataIsValid =
+        [int]::TryParse($metadata['width'], [ref]$width) -and
+        [int]::TryParse($metadata['height'], [ref]$height) -and
+        $fpsParts.Count -eq 2 -and
+        [double]::TryParse($fpsParts[0], [ref]$fpsNumerator) -and
+        [double]::TryParse($fpsParts[1], [ref]$fpsDenominator) -and
+        $width -gt 0 -and
+        $height -gt 0 -and
+        $fpsDenominator -ne 0
+
+    if (-not $metadataIsValid) {
+        return @{
+            Succeeded = $false
+            ExitCode  = 0
+            Error     = 'ffprobe returned incomplete or invalid video metadata.'
+        }
+    }
 
     return @{
-        Width  = [int]$w
-        Height = [int]$h
-        FPS    = $fps
-        SAR    = ($info | Select-String "sample_aspect_ratio=").Line.Split("=")[1]
-        DAR    = ($info | Select-String "display_aspect_ratio=").Line.Split("=")[1]
+        Succeeded = $true
+        ExitCode  = 0
+        Error     = $null
+        Width     = $width
+        Height    = $height
+        FPS       = [math]::Round(($fpsNumerator / $fpsDenominator), 2)
+        SAR       = if ($metadata.ContainsKey('sample_aspect_ratio')) { $metadata['sample_aspect_ratio'] } else { 'N/A' }
+        DAR       = if ($metadata.ContainsKey('display_aspect_ratio')) { $metadata['display_aspect_ratio'] } else { 'N/A' }
     }
 }
 
@@ -393,6 +429,17 @@ if (-not $files) {
 # ===============================
 $first = $files[0].FullName
 $vi = Get-VideoInfo $first
+
+if (-not $vi.Succeeded) {
+    if ($vi.ExitCode -ne 0) {
+        Write-Host "FFprobe video analysis failed with exit code $($vi.ExitCode)." -ForegroundColor Red
+    }
+    else {
+        Write-Host $vi.Error -ForegroundColor Red
+    }
+    exit 1
+}
+
 $interlaceInfo = Get-InterlaceInfo $first
 
 if (-not $interlaceInfo.Succeeded) {
