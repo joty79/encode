@@ -2,6 +2,12 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-08-25
+
+- Restored AviSynth+ 3.7.5 x86/x64 on the current Windows 11 installation from a local installer whose size and SHA-256 matched the official GitHub release asset.
+- Verified x86/x64 runtime DLLs and HKLM plugin registrations, achieved a clean `Test-EncodeEnvironment.ps1` result, and runtime-tested `BlankClip`, preserved FFMS2 `FFVideoSource`, the exact QTGMC recipe, and QTGMC-to-`h264_nvenc` MP4 encoding.
+- Revalidated the preserved QTGMC hash manifest and complete `AviSynth+.rar` integrity after installation; the custom payload and safety archive remained unchanged.
+
 ## 2026-08-24
 
 - Hardened `Video\Repair-TsTimestampRemux.ps1` source cleanup: source `.ts` files are now preserved by default, deletion requires explicit `-DeleteSource`, and deletion is blocked unless both timestamp checks and FFmpeg verification complete cleanly. `-DeleteSource -NoVerify` is rejected before processing.

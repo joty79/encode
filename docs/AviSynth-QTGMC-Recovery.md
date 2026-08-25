@@ -2,7 +2,7 @@
 
 ## Status
 
-This document captures the known-good Windows 10 environment used by the legacy video encoder. The environment has **not yet been restored or runtime-verified on the current Windows 11 installation**.
+This document captures the known-good Windows 10 environment used by the legacy video encoder and its Windows 11 recovery. AviSynth+ 3.7.5, FFMS2, QTGMC, and the existing NVENC path were restored and synthetic runtime-verified on 2026-08-25. A final golden-baseline run with a representative real input is still pending.
 
 The existing encoding workflow was working for its intended use. Recovery must preserve that behavior before any modernization or refactoring.
 
@@ -66,7 +66,7 @@ The source function `FFVideoSource` used by the encoder comes from `ffms2.dll`.
 
 The old report warned that some DePan/MVTools functions can use `libfftw3f-3.dll`. The working encode recipe did not establish that this optional DLL was required for the selected QTGMC settings. Do not copy an FFTW DLL into Windows system directories unless a focused runtime test proves it is needed and its source/integrity have been verified.
 
-## Current Windows 11 State
+## Pre-Recovery Windows 11 State
 
 Read-only inspection on 2026-08-23 found:
 
@@ -79,7 +79,44 @@ Read-only inspection on 2026-08-23 found:
 - `E:\Compilers\AviSynth+.rar` is a machine-local safety snapshot created after the Windows reinstall. It is intentionally not tracked by Git.
 - `docs\AviSynth-QTGMC-Preserved-Payload.sha256` records the SHA-256 hashes of the recovery evidence, core custom plugins, and safety archive as captured on 2026-08-23.
 
-Do not run the preserved `unins000.exe`; its uninstall metadata belongs to the previous Windows installation.
+At that point, the preserved `unins000.exe` belonged to the previous Windows installation and was not safe to run.
+
+## Windows 11 Recovery Result
+
+Recovery completed interactively on 2026-08-25:
+
+- Official installer: `D:\Programs\Video\AviSynthPlus_3.7.5_20250420_vcredist.exe`
+- Installer size: `41,243,460` bytes
+- Installer SHA-256: `465A42E0157EE2A6A109099A4F2E61D1BE003ECC28FAF4A837AB2F07133FC6F9`
+- Provenance: the local file's size and SHA-256 matched the official GitHub v3.7.5 release asset downloaded directly into a memory-only hash stream.
+- Installer destination: `E:\Compilers\AviSynth+`
+- Components: `main`, `main\avs32`, `main\avs64`, `associations`, `associations\openwithnotepad`
+- Elevation/EULA: the installer ran elevated; the user reviewed and accepted the interactive legal/setup choices.
+- New setup evidence: `E:\Compilers\AviSynth+\Setup Log 2026-08-25 #001.txt`
+- New setup-log SHA-256: `9A1FE7B1B747803B363FB899CAB0920783952C00CD57469FEDF85F70940FD7EB`
+- Installer result: installation succeeded and no restart was requested.
+- VC redistributables: both bundled installers returned `1638`, meaning an equal or newer product was already installed. AviSynth and all downstream runtime gates succeeded.
+
+Installed runtime state:
+
+| Item | Verified state |
+| --- | --- |
+| x64 runtime | `C:\Windows\System32\AviSynth.dll`, version 3.7.5, SHA-256 `8F7D07917E4B364DF5FD7F1B8B3C1E135465D73325F8D25BC4354DD6435AFAB4` |
+| x86 runtime | `C:\Windows\SysWOW64\AviSynth.dll`, version 3.7.5, SHA-256 `E91A9E1CD0952D23011DF316E27E047AD175D1AD2FDE9442470C362D5F7010EF` |
+| x64 plugin registration | `HKLM\Software\AviSynth`: `plugins64` and `plugins64+` |
+| x86 plugin registration | `HKLM\Software\WOW6432Node\AviSynth`: `plugins` and `plugins+` |
+| Environment preflight | `READY`, exit code `0` |
+
+Runtime gates passed with FFmpeg 9.0:
+
+1. AviSynth `BlankClip` loaded and rendered.
+2. `FFVideoSource` loaded a disposable H.264 sample through the preserved `ffms2.dll`.
+3. A controlled interlaced H.264 sample passed the exact encoder recipe: `AssumeTFF()`, `QTGMC(Preset="Slow", TR2=2, FPSDivisor=2)`, and `Prefetch(14)`.
+4. The QTGMC result encoded through `h264_nvenc` with AAC audio to a valid 320x240 progressive H.264 MP4. FFmpeg and ffprobe returned exit code `0`.
+5. The preserved SHA-256 manifest remained 12/12 clean with zero missing files or mismatches.
+6. `E:\Compilers\AviSynth+.rar` remained unchanged and passed a complete 7-Zip archive test (`46` files, `Everything is Ok`).
+
+The live `unins000.exe` and `unins000.dat` were replaced by the 2026-08-25 installer and now belong to the current Windows 11 installation. The `.rar` snapshot still contains the old Windows 10 uninstall pair; do not restore those old files over the live installation.
 
 ## Recovery Sequence
 
@@ -97,6 +134,6 @@ Do not run the preserved `unins000.exe`; its uninstall metadata belongs to the p
    - QTGMC against a short controlled interlaced sample
    - FFmpeg reading the generated `.avs`
    - the unchanged `Video\video_encode.ps1` against a copy of a representative input
-10. Preserve the successful input, settings, console transcript, output metadata, and output hash as the golden baseline.
+10. Preserve the successful input, settings, console transcript, output metadata, and output hash as the golden baseline. This final representative-input gate remains pending after the successful synthetic recovery tests above.
 
 Parser/static checks and Registry readback are not substitutes for the final media encode test.
