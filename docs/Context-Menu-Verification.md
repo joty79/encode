@@ -27,7 +27,7 @@ Normal folder menus include video/audio queue addition, direct video/audio encod
 
 The TS folder actions are deliberately `Shift`-only:
 
-- Scan and move problem TS files
+- Analyze TS timestamps
 - Fix TS → MP4 in folder (No re-encode)
 
 ## Windows 11 Multi-Selection

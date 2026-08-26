@@ -158,7 +158,7 @@ Fix TS -> MP4 (No re-encode)
 It also adds two Shift-only folder actions for top-level `.ts` files (both on a folder and its background, for six Registry locations total):
 
 ```text
-Scan and move problem TS files
+Analyze TS timestamps
 Fix TS -> MP4 in folder (No re-encode)
 ```
 
