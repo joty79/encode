@@ -1,11 +1,18 @@
 [CmdletBinding()]
-param()
+param(
+    [Parameter()]
+    [string]$PowerShellPath
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ffmpegPath = (Get-Command -Name 'ffmpeg' -ErrorAction Stop).Source
-$pwshPath = (Get-Command -Name 'pwsh' -ErrorAction Stop).Source
+$pwshPath = if ($PowerShellPath) {
+    (Get-Item -LiteralPath $PowerShellPath -ErrorAction Stop).FullName
+} else {
+    (Get-Command -Name 'pwsh' -ErrorAction Stop).Source
+}
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 $repairScript = Join-Path -Path $repoRoot -ChildPath 'Video\Repair-TsTimestampRemux.ps1'
 
@@ -98,12 +105,35 @@ try {
     New-Item -ItemType Directory -Path $batchRoot | Out-Null
     Copy-Item -LiteralPath $keepInput -Destination (Join-Path $batchRoot 'one.ts')
     Copy-Item -LiteralPath $keepInput -Destination (Join-Path $batchRoot 'two.ts')
-    & $pwshPath -NoLogo -NoProfile -File $repairScript -Path $batchRoot -AnalyzeOnly -MoveProblemFiles
+    $cleanScanOutput = @(& $pwshPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairScript -Path $batchRoot -AnalyzeOnly -MoveProblemFiles -ScanWorkers 4 2>&1)
     if ($LASTEXITCODE -ne 0) {
         throw 'Clean folder analyze-and-move smoke failed.'
     }
+    $cleanScanText = $cleanScanOutput -join [Environment]::NewLine
+    $oneStatusIndex = $cleanScanText.IndexOf('[1/2] one.ts — OK', [StringComparison]::Ordinal)
+    $twoStatusIndex = $cleanScanText.IndexOf('[2/2] two.ts — OK', [StringComparison]::Ordinal)
+    if ($oneStatusIndex -lt 0 -or $twoStatusIndex -le $oneStatusIndex) {
+        throw 'Parallel clean folder results were not printed in deterministic file order.'
+    }
     if (Test-Path -LiteralPath (Join-Path $batchRoot '_TS_TIMESTAMP_PROBLEMS')) {
         throw 'Clean folder scan created a problem folder unexpectedly.'
+    }
+
+    $failureRoot = Join-Path -Path $smokeRoot -ChildPath 'failure-isolation'
+    New-Item -ItemType Directory -Path $failureRoot | Out-Null
+    Copy-Item -LiteralPath $keepInput -Destination (Join-Path $failureRoot 'a-clean.ts')
+    [IO.File]::WriteAllText((Join-Path $failureRoot 'b-invalid.ts'), 'not media')
+    Copy-Item -LiteralPath $keepInput -Destination (Join-Path $failureRoot 'c-clean.ts')
+    $failureScanOutput = @(& $pwshPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairScript -Path $failureRoot -AnalyzeOnly -ScanWorkers 4 2>&1)
+    if ($LASTEXITCODE -eq 0) {
+        throw 'Mixed valid/invalid parallel folder scan returned success.'
+    }
+    $failureScanText = $failureScanOutput -join [Environment]::NewLine
+    $firstCleanIndex = $failureScanText.IndexOf('[1/3] a-clean.ts — OK', [StringComparison]::Ordinal)
+    $failedFileIndex = $failureScanText.IndexOf('[2/3] b-invalid.ts — SCAN FAILED', [StringComparison]::Ordinal)
+    $lastCleanIndex = $failureScanText.IndexOf('[3/3] c-clean.ts — OK', [StringComparison]::Ordinal)
+    if ($firstCleanIndex -lt 0 -or $failedFileIndex -le $firstCleanIndex -or $lastCleanIndex -le $failedFileIndex) {
+        throw 'Parallel folder failure isolation or deterministic result order failed.'
     }
 
     $problemRoot = Join-Path -Path $smokeRoot -ChildPath 'problem-scan'
@@ -129,9 +159,15 @@ try {
     $existingProblem = Join-Path $problemFolder 'bad.ts'
     $problemSentinel = [byte[]](9, 8, 7, 6)
     [IO.File]::WriteAllBytes($existingProblem, $problemSentinel)
-    & $pwshPath -NoLogo -NoProfile -File $repairScript -Path $problemRoot -AnalyzeOnly -MoveProblemFiles
+    $problemScanOutput = @(& $pwshPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $repairScript -Path $problemRoot -AnalyzeOnly -MoveProblemFiles -ScanWorkers 4 2>&1)
     if ($LASTEXITCODE -ne 0) {
         throw 'Timestamp-problem folder scan failed.'
+    }
+    $problemScanText = $problemScanOutput -join [Environment]::NewLine
+    $problemStatusIndex = $problemScanText.IndexOf('[1/1] bad.ts — PROBLEM', [StringComparison]::Ordinal)
+    $problemMoveIndex = $problemScanText.IndexOf('Moved problem file ->', [StringComparison]::Ordinal)
+    if ($problemStatusIndex -lt 0 -or $problemMoveIndex -le $problemStatusIndex) {
+        throw 'Problem file moved before its completed classification was reported.'
     }
     if (Test-Path -LiteralPath $problemInput) {
         throw 'Detected timestamp-problem file was not moved.'

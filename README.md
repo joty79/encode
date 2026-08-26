@@ -80,12 +80,13 @@ pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\source.ts' -S
 pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\source.ts' -SkipInputAnalysis -DeleteSource
 pwsh -File '.\Video\Repair-Mp4DisguisedTs.ps1' -Path 'C:\Path\To\looks_like_mp4.mp4'
 pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\Folder' -AnalyzeOnly -MoveProblemFiles
+pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\Folder' -AnalyzeOnly -ScanWorkers 2
 pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\Folder' -SkipInputAnalysis
 ```
 
 Οι λεπτομέρειες του TS timestamp remux workflow βρίσκονται στο `Video\Ts-Timestamp-Remux.md`.
 
-Το `Video\Repair-TsTimestampRemux.reg` προσθέτει δύο context-menu actions για `.ts` files: `Analyze TS timestamps` και `Fix TS -> MP4 (No re-encode)`. Τα folder actions εμφανίζονται μόνο με Shift: `Scan TS folder for problems` μετακινεί problem `.ts` files στο `_TS_TIMESTAMP_PROBLEMS`, ενώ `Fix TS -> MP4 in folder (No re-encode)` επεξεργάζεται τα top-level `.ts` files του φακέλου. Το fix γράφει τα MP4 στο `_TS_FIXED_MP4` με ίδιο basename και `.mp4` extension και κρατά το source `.ts` από προεπιλογή. Διαγραφή γίνεται μόνο με ρητό `-DeleteSource`, μετά από clean timestamp checks και clean FFmpeg verification· το `-NoVerify` δεν μπορεί να συνδυαστεί με διαγραφή. Το analyze flag-άρει backwards/duplicate timestamps, μεγάλα gaps και έντονο video cadence jitter που μπορεί να χαλάσει strict Avidemux direct MP4 save.
+Το `Video\Repair-TsTimestampRemux.reg` προσθέτει δύο context-menu actions για `.ts` files: `Analyze TS timestamps` και `Fix TS -> MP4 (No re-encode)`. Τα folder actions εμφανίζονται μόνο με Shift: `Scan TS folder for problems` μετακινεί problem `.ts` files στο `_TS_TIMESTAMP_PROBLEMS`, ενώ `Fix TS -> MP4 in folder (No re-encode)` επεξεργάζεται τα top-level `.ts` files του φακέλου. Το folder analyze χρησιμοποιεί έως 4 independent whole-file workers by default (`-ScanWorkers 1..4`), αλλά εμφανίζει deterministic filename order και απομονώνει τα per-file failures. Το fix γράφει τα MP4 στο `_TS_FIXED_MP4` με ίδιο basename και `.mp4` extension και κρατά το source `.ts` από προεπιλογή. Διαγραφή γίνεται μόνο με ρητό `-DeleteSource`, μετά από clean timestamp checks και clean FFmpeg verification· το `-NoVerify` δεν μπορεί να συνδυαστεί με διαγραφή. Το analyze flag-άρει backwards/duplicate timestamps, μεγάλα gaps και έντονο video cadence jitter που μπορεί να χαλάσει strict Avidemux direct MP4 save.
 
 Το `Video\Repair-Mp4DisguisedTs.ps1` είναι terminal-only helper για `.mp4` files που στην πραγματικότητα είναι MPEG-TS container. Κάνει πρώτα fast container check, σταματάει αν το αρχείο είναι real MP4, και αν είναι disguised TS τρέχει no-reencode `TS -> MKV -> MP4` repair κρατώντας πάντα το source file. Σε αυτό το mode παραλείπει το `setts` timestamp rewrite by default για να μην αλλοιωθεί η πραγματική διάρκεια.
 

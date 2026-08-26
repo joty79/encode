@@ -42,7 +42,11 @@ param(
     [switch]$NoVerify,
 
     [Parameter()]
-    [switch]$PauseAtEnd
+    [switch]$PauseAtEnd,
+
+    [Parameter()]
+    [ValidateRange(1, 4)]
+    [int]$ScanWorkers = 4
 )
 
 Set-StrictMode -Version Latest
@@ -163,6 +167,68 @@ function Invoke-NativeChecked {
     }
 }
 
+function ConvertTo-WindowsCommandLineArgument {
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Argument
+    )
+
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append('"')
+    $backslashCount = 0
+    foreach ($character in $Argument.ToCharArray()) {
+        if ($character -eq '\') {
+            $backslashCount++
+            continue
+        }
+
+        if ($character -eq '"') {
+            [void]$builder.Append('\', (($backslashCount * 2) + 1))
+            [void]$builder.Append('"')
+        } else {
+            if ($backslashCount -gt 0) {
+                [void]$builder.Append('\', $backslashCount)
+            }
+            [void]$builder.Append($character)
+        }
+        $backslashCount = 0
+    }
+
+    if ($backslashCount -gt 0) {
+        [void]$builder.Append('\', ($backslashCount * 2))
+    }
+    [void]$builder.Append('"')
+    return $builder.ToString()
+}
+
+function Set-ProcessStartInfoArguments {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.ProcessStartInfo]$ProcessInfo,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$CommandArgs
+    )
+
+    $argumentListProperty = $ProcessInfo.PSObject.Properties['ArgumentList']
+    if ($argumentListProperty -and $null -ne $argumentListProperty.Value) {
+        foreach ($commandArgument in $CommandArgs) {
+            [void]$ProcessInfo.ArgumentList.Add($commandArgument)
+        }
+        return
+    }
+
+    $encodedArguments = foreach ($commandArgument in $CommandArgs) {
+        ConvertTo-WindowsCommandLineArgument -Argument $commandArgument
+    }
+    $ProcessInfo.Arguments = $encodedArguments -join ' '
+}
+
 function Invoke-NativeVerificationChecked {
     param(
         [Parameter(Mandatory = $true)]
@@ -272,9 +338,7 @@ function Get-TimestampStats {
         $InputPath
     )
 
-    foreach ($probeArg in $probeArgs) {
-        [void]$processInfo.ArgumentList.Add($probeArg)
-    }
+    Set-ProcessStartInfoArguments -ProcessInfo $processInfo -CommandArgs $probeArgs
 
     $processInfo.RedirectStandardOutput = $true
     $processInfo.RedirectStandardError = $true
@@ -815,39 +879,109 @@ function Invoke-FolderTimestampScan {
     Write-ToolHeader -Title 'TS Folder Timestamp Scan'
     Write-Host ('📁 Folder: {0}' -f $Folder.FullName)
     Write-Host ('🔎 Files:  {0}' -f $Files.Count)
+    $effectiveScanWorkers = [Math]::Min($ScanWorkers, $Files.Count)
+    Write-Host ('⚙️  Workers: {0}' -f $effectiveScanWorkers)
     if ($MoveProblemFiles) {
         Write-Host ('📦 Problem files will move to: {0}' -f (Join-Path -Path $Folder.FullName -ChildPath $ProblemFolderName)) -ForegroundColor Magenta
     }
 
     $results = New-Object System.Collections.Generic.List[object]
-    $index = 0
-    foreach ($file in $Files) {
-        $index++
-        try {
-            $stats = @(Get-TimestampStats -Ffprobe $Ffprobe -InputPath $file.FullName)
-            $issueInfo = Get-TimestampIssueInfo -Stats $stats
-            Write-StatusLine -Index $index -Total $Files.Count -FileName $file.Name -IssueInfo $issueInfo
+    $scanInvocations = New-Object System.Collections.Generic.List[object]
+    $runspacePool = $null
+    try {
+        $initialSessionState = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+        foreach ($functionName in @(
+            'ConvertTo-WindowsCommandLineArgument',
+            'Set-ProcessStartInfoArguments',
+            'New-StreamStat',
+            'Get-TimestampStats',
+            'Get-TimestampIssueInfo'
+        )) {
+            $definition = (Get-Command -Name $functionName -CommandType Function).Definition
+            $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry($functionName, $definition)
+            $initialSessionState.Commands.Add($entry)
+        }
 
-            $movedTo = ''
-            if ($MoveProblemFiles -and $issueInfo.IsProblem) {
-                $movedTo = Move-ProblemTsFile -File $file -FolderRoot $Folder.FullName
+        $runspacePool = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspacePool(
+            1,
+            $effectiveScanWorkers,
+            $initialSessionState,
+            $Host
+        )
+        $runspacePool.Open()
+
+        $workerScript = {
+            param(
+                [string]$WorkerFfprobe,
+                [string]$WorkerInputPath
+            )
+
+            $ErrorActionPreference = 'Stop'
+            $workerStats = @(Get-TimestampStats -Ffprobe $WorkerFfprobe -InputPath $WorkerInputPath)
+            $workerIssueInfo = Get-TimestampIssueInfo -Stats $workerStats
+            return [pscustomobject]@{
+                Stats = $workerStats
+                IssueInfo = $workerIssueInfo
             }
+        }
 
-            $results.Add([pscustomobject]@{
-                File = $file.Name
-                Status = $issueInfo.Status
-                Summary = $issueInfo.Summary
-                MovedTo = $movedTo
+        foreach ($file in $Files) {
+            $workerPowerShell = [PowerShell]::Create()
+            $workerPowerShell.RunspacePool = $runspacePool
+            [void]$workerPowerShell.AddScript($workerScript.ToString()).AddArgument($Ffprobe).AddArgument($file.FullName)
+            $scanInvocations.Add([pscustomobject]@{
+                File = $file
+                PowerShell = $workerPowerShell
+                AsyncResult = $workerPowerShell.BeginInvoke()
             }) | Out-Null
         }
-        catch {
-            Write-Bad ('[{0}/{1}] {2} — SCAN FAILED — {3}' -f $index, $Files.Count, $file.Name, $_.Exception.Message)
-            $results.Add([pscustomobject]@{
-                File = $file.Name
-                Status = 'ERROR'
-                Summary = $_.Exception.Message
-                MovedTo = ''
-            }) | Out-Null
+
+        $index = 0
+        foreach ($scanInvocation in $scanInvocations) {
+            $index++
+            $file = $scanInvocation.File
+            $issueInfo = $null
+            try {
+                $workerOutput = @($scanInvocation.PowerShell.EndInvoke($scanInvocation.AsyncResult))
+                if ($workerOutput.Count -ne 1 -or -not $workerOutput[0].IssueInfo) {
+                    throw "Timestamp worker returned an invalid result for '$($file.FullName)'."
+                }
+                $issueInfo = $workerOutput[0].IssueInfo
+                Write-StatusLine -Index $index -Total $Files.Count -FileName $file.Name -IssueInfo $issueInfo
+
+                $movedTo = ''
+                if ($MoveProblemFiles -and $issueInfo.IsProblem) {
+                    $movedTo = Move-ProblemTsFile -File $file -FolderRoot $Folder.FullName
+                }
+
+                $results.Add([pscustomobject]@{
+                    File = $file.Name
+                    Status = $issueInfo.Status
+                    Summary = $issueInfo.Summary
+                    MovedTo = $movedTo
+                }) | Out-Null
+            }
+            catch {
+                Write-Bad ('[{0}/{1}] {2} — SCAN FAILED — {3}' -f $index, $Files.Count, $file.Name, $_.Exception.Message)
+                $results.Add([pscustomobject]@{
+                    File = $file.Name
+                    Status = 'ERROR'
+                    Summary = $_.Exception.Message
+                    MovedTo = ''
+                }) | Out-Null
+            }
+        }
+    }
+    finally {
+        foreach ($scanInvocation in $scanInvocations) {
+            if ($scanInvocation.PowerShell.InvocationStateInfo.State -notin @('Completed', 'Failed', 'Stopped')) {
+                $scanInvocation.PowerShell.Stop()
+            }
+            $scanInvocation.PowerShell.Dispose()
+        }
+        if ($runspacePool) {
+            $runspacePool.Close()
+            $runspacePool.Dispose()
         }
     }
 

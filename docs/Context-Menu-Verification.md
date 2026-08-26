@@ -43,6 +43,7 @@ The TS folder actions are deliberately `Shift`-only:
 
 - **2026-08-26 — `.ts` / Analyze TS timestamps: PASS.** The user launched `Analyze TS timestamps` from Explorer on `D:\Users\joty79\Desktop\1.ts`. The expected script opened with the correct input, identified MPEG-TS/H.264/AAC, analyzed 18,096 video and 28,350 audio packets, reported no gaps, jitter, tiny/backward PTS/DTS, and reached its normal close prompt. This proves the real Explorer launcher path and clean-file diagnostic behavior. It does **not** prove broken-file detection or repair; a genuinely problematic TS is still required for that acceptance.
 - **2026-08-27 — TS scan performance: PASS.** The full analyzer (no sampling) processed the current 3.75 GiB Desktop `2.ts` in 5.856 seconds instead of the measured 78.825-second baseline, then scanned `1.ts` and `2.ts` together through folder mode in 5.850 seconds. Both were classified `OK`; this still does not replace a genuinely broken TS detection/repair test.
+- **2026-08-27 — TS folder parallelism: PASS.** Four copied `1.ts`/`2.ts` pairs (15.91 GiB total) returned the same eight ordered `OK` results at 1, 2 and 4 whole-file workers. Two production runs measured 21.920–22.322 s, 14.460–14.678 s and 10.499–10.749 s respectively; four workers are the retained default/max. Warm file cache prevented a meaningful cold-disk throughput claim. Synthetic smoke tests prove deterministic output, per-file failure isolation and post-classification moving under PowerShell 7 and Windows PowerShell 5.1.
 
 ## Still Requiring Explorer Acceptance
 

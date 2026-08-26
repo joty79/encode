@@ -136,6 +136,8 @@ pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' `
   -MoveProblemFiles
 ```
 
+Folder analysis uses up to four independent whole-file workers by default. Use `-ScanWorkers 1` for sequential behavior or another value from 1 through 4 when lower CPU use is preferable. Results are still printed in deterministic filename order; a failed file is reported without cancelling its siblings, and a problem file is moved only after its own classification has completed.
+
 The script keeps codecs with `-c copy`. It does not re-encode video or audio.
 
 ## Context Menu
@@ -181,7 +183,17 @@ Measured on the current Windows 11 host:
 
 Both files were classified `OK`. The current `2.ts` has SHA-256 `1D12BDD04999D722EF00B81B28FF63BCD7F4EC94836F4C8D7C93E262D527C80B`, 299,367 video packets and only four cadence deviations. It is not interchangeable with the older historical `2.ts` evidence above, which recorded 319,932 video packets and heavy cadence jitter; the matching filename alone is not fixture identity.
 
-Focused TS safety, smoke and exit-code suites pass under PowerShell 7 and Windows PowerShell 5.1 after the optimization. The scan remains a full packet pass, not sampling, and folder scans remain sequential to avoid unnecessary concurrent disk pressure.
+The follow-up folder benchmark used four byte-identical pairs in `D:\Users\joty79\Desktop\New folder`: four copies of the 243 MB `1.ts` and four copies of the 3.75 GiB `2.ts`, for 15.91 GiB per run. The retained production runspace implementation measured:
+
+| Complete-file workers | Wall time, run 1 | Wall time, run 2 | Mean total CPU | Speedup vs. 1 worker |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 21.920 s | 22.322 s | 21.0% | 1.00× |
+| 2 | 14.460 s | 14.678 s | 28.8% | 1.52× |
+| 4 | 10.499 s | 10.749 s | 43.9% | 2.08× |
+
+Every run returned the same eight `OK` classifications. Windows physical-disk counters were near zero in most repeats because hashing and repeated scans had populated the file cache, so these numbers are warm-cache end-to-end measurements rather than a cold-NVMe throughput claim. The implementation never splits one TS into timeline chunks.
+
+Focused TS safety and smoke suites pass under PowerShell 7 and Windows PowerShell 5.1 after the optimization. The scan remains a full packet pass, not sampling. The current copied fixtures are clean; a genuinely broken TS is still required for regression acceptance of real problem detection and repair.
 
 ## Known Limits
 

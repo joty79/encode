@@ -5,6 +5,7 @@ All notable changes to this repo are recorded here.
 ## 2026-08-27
 
 - Optimized the TS timestamp analyzer without changing its full-packet coverage or detection rules. Typed numeric packet storage and native array sorting replaced per-packet PowerShell objects plus `Sort-Object`: the current 243 MB `1.ts` improved from 4.061 s to 0.845 s, while a 3.75 GiB/767,217-packet `2.ts` improved from 78.825 s to 5.856 s. A two-file folder scan completed in 5.850 s. Focused TS safety, smoke and exit-code tests pass under PowerShell 7 and Windows PowerShell 5.1.
+- Added bounded whole-file parallelism to TS folder analysis (`-ScanWorkers 1..4`, default/max 4) without changing packet coverage or classification rules. Eight clean copied fixtures totaling 15.91 GiB measured 21.920–22.322 s sequential, 14.460–14.678 s with two workers and 10.499–10.749 s with four; output remains filename-ordered, file failures are isolated, and moving occurs only after that file's completed classification. Also restored the streaming analyzer's actual Windows PowerShell 5.1 runtime compatibility.
 
 ## 2026-08-26
 
