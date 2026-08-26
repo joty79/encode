@@ -39,13 +39,18 @@ The TS folder actions are deliberately `Shift`-only:
 - Video encode/QTGMC, video queue, Inspector, smart image conversion, MKV remux, MP4+SRT merge, TS analysis/remux, and subtitle conversion/extraction have focused runtime evidence recorded in their owning docs/tests.
 - WMV join now uses ASFBin. Two synthetic WMV2/WMA2 files were joined through the real interactive script into a 2.153-second ASF/WMV with both streams and a clean full decode.
 
+## Explorer Acceptance Recorded
+
+- **2026-08-26 — `.ts` / Analyze TS timestamps: PASS.** The user launched `Analyze TS timestamps` from Explorer on `D:\Users\joty79\Desktop\1.ts`. The expected script opened with the correct input, identified MPEG-TS/H.264/AAC, analyzed 18,096 video and 28,350 audio packets, reported no gaps, jitter, tiny/backward PTS/DTS, and reached its normal close prompt. This proves the real Explorer launcher path and clean-file diagnostic behavior. It does **not** prove broken-file detection or repair; a genuinely problematic TS is still required for that acceptance.
+
 ## Still Requiring Explorer Acceptance
 
-1. Visually inspect each representative file menu in the table.
-2. Confirm normal folder, folder-background, desktop-background, and `Shift`-only TS entries.
-3. Exercise each launcher with disposable or specifically chosen inputs; verify output names, prompts, collisions and exit behavior.
-4. Select at least 16 disposable files and confirm the intended multi-file queue action remains visible.
-5. Record any duplicate, noisy or misplaced entries. Organize/group menus only after this visibility and launcher pass.
+1. Visually inspect each remaining representative file menu in the table. `.ts` analysis is accepted.
+2. Find a genuinely problematic TS and confirm detection; only then test the no-reencode repair and its output.
+3. Confirm normal folder, folder-background, desktop-background, and `Shift`-only TS entries.
+4. Exercise each remaining launcher with disposable or specifically chosen inputs; verify output names, prompts, collisions and exit behavior.
+5. Select at least 16 disposable files and confirm the intended multi-file queue action remains visible.
+6. Record any duplicate, noisy or misplaced entries. Organize/group menus only after this visibility and launcher pass.
 
 ## Edited PowerShell Files Without Context Menus
 
