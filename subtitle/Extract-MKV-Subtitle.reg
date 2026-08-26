@@ -1,8 +1,8 @@
 Windows Registry Editor Version 5.00
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle]
 "MUIVerb"="Extract subtitle → SRT"
 "Icon"="d:\\Users\\joty79\\Documents\\Icons\\SubtitleEdit.ico"
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle\command]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle\command]
 @="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Extract-MKV-Subtitle.vbs\" \"%1\""

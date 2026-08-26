@@ -16,6 +16,7 @@ marked **unchanged in that goal** was not silently rewritten by that change set.
 | Status | Meaning |
 | --- | --- |
 | Installed / verified | Reviewed workflow whose Explorer integration is present and whose main behavior has runtime evidence. |
+| Registry installed / visual pending | Registry and Shell visibility are present, but the real Explorer menu/click path still needs user-facing acceptance. |
 | Terminal-only | Reviewed tool, deliberately not exposed through Explorer. |
 | Prototype | Useful experiment; automated tests do not establish production or visual equivalence. |
 | Legacy hold | Preserved for history but should not be installed or trusted as-is. |
@@ -99,7 +100,7 @@ manual visual decision. The canonical checklist is in
 | `Video\Verify-VideoIntegrity.ps1` | Very fast FFmpeg copy-mode packet/container/NAL scan; it does not decode frames. | **Terminal-only, changed.** Warning detection no longer ignores every line containing `format`; detected corruption returns exit 2 even if FFmpeg exits 0, and the clean message no longer overclaims full health. Six real-fixture assertions exist. |
 | `Video\Detect-BadCuts.ps1` | Mode 1 checks requested copy-cut timestamps against keyframes. Mode 2 performs full decode and reports decode errors plus informational scene transitions. | **Terminal-only, changed.** Added invariant time parsing, strict parameter validation and nonzero results for invalid/misaligned cuts or decode warnings. Scene transitions are no longer mislabeled as confirmed bad cuts. Thirteen real assertions exist. |
 | `Video\Repair-DamagedVideo.ps1` | Detects invalid AVCC NAL lengths in H.264 MP4/MOV and rebuilds the file by copying clean regions, dropping damaged ranges and re-encoding only patch boundaries. | **Prototype, changed heavily.** See the mandatory visual-regression section above. Thirty synthetic safety assertions are not visual proof. |
-| `Video\join-wmv-smart.ps1` | Tries to auto-select related numeric/A-B/token WMV files and join them with legacy ASFBin. | **Legacy hold; unchanged in the pasted goal. Do not install.** It can over-match, uses overwrite mode, lacks reliable result validation, and depends on unsigned/evaluation/non-commercial-boundary ASFBin. FFmpeg only proved ordinary compatible WMV joining, not damaged-ASF recovery equivalence. |
+| `Video\join-wmv-smart.ps1` | Proposes related numeric/A-B/token WMV files and joins the confirmed list with ASFBin to `<clicked-base>_joined.wmv`. | **Registry installed / visual and irregular-WMV test pending.** The menu is now `.wmv`-only; output collisions, missing ASFBin, nonzero exit and invalid output are guarded. A real ASFBin synthetic join preserved WMV2/WMA2 streams and passed full decode. ASFBin remains the chosen backend; FFmpeg is not treated as damaged-ASF-equivalent. |
 
 ## Video support scripts
 

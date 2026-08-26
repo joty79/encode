@@ -30,17 +30,18 @@ Completed and pushed on `codex/re-onboard-encode`:
 
 Current limitations and remaining work:
 
-- The three restored video/queue context-menu groups were imported from legacy `.reg` files and are not yet owned by a project installer or uninstaller.
+- All 19 current `.reg` artifacts were imported on 2026-08-26 for an explicit Windows 11 discovery pass; they are not yet owned by a project installer or uninstaller.
 - The `.reg` files still contain machine-specific absolute checkout and icon paths.
 - MKVToolNix v101.0 and Subtitle Edit SeConv v5.1.0 are installed at standard project-known paths without requiring `PATH`. ImageMagick v7.1.2-30 uses the verified bundled Limited policy, and its reviewed smart-conversion menu is installed.
-- Audio, icon, no-audio, and remaining installation integration still need their own representative characterization.
+- Audio, icon, no-audio, and several launcher paths still need representative runtime/visual characterization even though their Registry entries are now installed.
 
 The `Video` folder review is complete and `Video\Tool-Inventory.md` owns its final
-re-onboarding classification. The legacy WMV/ASFBin workflow is retained but not
-installed, the damaged-H.264 tool remains a characterized terminal-only prototype,
+re-onboarding classification. The WMV workflow now uses ASFBin through an installed
+`.wmv`-only menu with synthetic runtime evidence, while an irregular user WMV remains
+the decisive follow-up; the damaged-H.264 tool remains a characterized terminal-only prototype,
 and the empty Inspector files are inert historical scaffolding. Subtitle Edit CLI
 recovery and subtitle-helper characterization are complete; their two reviewed
-menus are installed per-user and verified by Registry readback. The installer
+menus are installed machine-wide and visible to Shell enumeration. The installer
 milestone remains deferred until the broader context-menu redesign.
 
 ## Phases

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the current source of truth for the `Video` folder during Windows 11 re-onboarding. It records which artifacts are supported, installed, pending review, dependency-blocked, prototypes, support files, or empty scaffolding. Do not bulk-import the remaining `.reg` files; review and validate one workflow at a time.
+This is the current source of truth for the `Video` folder during Windows 11 re-onboarding. It records which artifacts are supported, installed, pending review, dependency-blocked, prototypes, support files, or empty scaffolding. All current context-menu artifacts were imported on 2026-08-26 for an explicit Explorer discovery pass; that does not replace per-workflow runtime and visual acceptance.
 
 ## Current Installed and Verified Menus
 
@@ -18,12 +18,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 | Merge matching MP4 + SRT | `Merge-MP4-SRT.ps1`, `Merge-MP4-SRT.reg` | Real video+subtitle MKV validation; sources preserved; existing output unchanged; missing/invalid input leaves no partial MKV |
 | Convert WebP/AVIF/HEIC/HEIF | `convert_webp_smart.ps1`, `convert_webp_smart.reg` | 25 real assertions in both shells under Limited policy; five Registry commands imported and read back; static/animated timing and output validation verified |
 | TS timestamp analysis/remux | `Repair-TsTimestampRemux.ps1`, `.reg`, `lib\TsSourceCleanup.ps1` | Clean B-frame and deliberately broken-timeline TS classification; single/folder repair; source, collision, partial-output and unique-move safety; six Registry entries read back |
-
-## Legacy Hold — Not Installed or Supported
-
-| Workflow | Artifacts | Classification | Reason |
-| --- | --- | --- | --- |
-| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | Preserved legacy workflow; do not install | The old ASFBin dependency has an unresolved license boundary and the script is unsafe as written. FFmpeg can replace ordinary compatible joins, but that would not preserve ASFBin's possible damaged-ASF recovery behavior. Revisit only with a real WMV use case that defines which behavior is required. |
+| Join related WMV files | `join-wmv-smart.ps1`, `join-wmv-smart.reg` | ASFBin remains the chosen backend. The menu is `.wmv`-only; collisions, missing ASFBin, exit failures and invalid output are guarded. A real ASFBin synthetic join produced WMV2/WMA2 ASF with clean full decode; an irregular user WMV remains the important real-world test. |
 
 ## Supported Terminal-Only Workflows
 
@@ -47,7 +42,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 | `lib\TsSourceCleanup.ps1` | Shared source-deletion guard used by TS timestamp remux |
 | `video_encode_changelog.md` | Historical video encoder notes |
 | `CHANGELOG.md` | Historical queue notes |
-| `ContextMenuHandlers.reg` | Global Explorer multi-selection tweak; not a media command and deferred until context-menu redesign |
+| `Explorer-MultiSelectLimit.reg` | Per-user Explorer multi-selection limit (`MultipleInvokePromptMinimum=100`); applies to Windows 11 but is not a media command |
 | `icons.code-workspace` | Editor workspace artifact; not an installable tool |
 
 ## Inert Inspector Scaffolding
@@ -87,11 +82,11 @@ populate or remove them only during the Inspector/context-menu redesign.
 
 ### WMV Join Review Evidence
 
-- The legacy Registry entry is not installed. As written, it targets `HKEY_CLASSES_ROOT\*`, so it would appear for every file type instead of only WMV files.
-- The script passes ASFBin `-y`, does not protect an existing output, does not verify ASFBin's exit code or output, and can over-match numeric/token-related filenames. Manual mode also shadows PowerShell's automatic `$input` variable.
+- The Registry entry is installed only for `.wmv`; the former `HKEY_CLASSES_ROOT\*` registration is absent.
+- The script no longer passes ASFBin `-y`, refuses an existing `_joined.wmv`, verifies ASFBin's exit code and output with ffprobe, and no longer shadows PowerShell's `$input`/`$args` automatic variables. Its filename auto-matching still requires human confirmation and remains a real-world watch point.
 - Installed ASFBin reports v1.8.3.934, was built in 2012, is not Authenticode-signed, and its bundled documentation states that it is free for non-commercial use while the executable help says evaluation use. No terms were accepted or interpreted by the agent.
-- A synthetic two-part WMV test proved that FFmpeg 9 can concatenate compatible WMV2/WMA2 inputs by stream copy into a valid ASF/WMV output with both streams and a clean full decode.
-- The FFmpeg test does not prove equivalence to ASFBin's specialized damaged-ASF recovery behavior. Do not restore this menu until the intended use and dependency choice are explicit.
+- A real ASFBin invocation joined two synthetic WMV2/WMA2 files into a 2.153-second ASF/WMV with both streams and a clean FFmpeg full decode. The sources were preserved and the temporary fixture was removed after verification.
+- FFmpeg stream-copy remains only an optional ordinary-file alternative; it is not treated as equivalent to ASFBin for irregular or damaged ASF behavior.
 
 ### ImageMagick and Smart Image Conversion Evidence
 
@@ -108,8 +103,8 @@ populate or remove them only during the Inspector/context-menu redesign.
 ## Agreed Order
 
 The `Video` folder review is complete: every PowerShell workflow is classified as
-installed/verified, supported terminal-only, characterized prototype, legacy hold,
-or support/scaffolding. Restore only approved context-menu entries as their workflow
-tests pass. The next re-onboarding slice is the subtitle dependency and helper audit;
-installer/uninstaller architecture remains deferred until the broader context-menu
-set is redesigned.
+installed, supported terminal-only, characterized prototype, or support/scaffolding.
+All current Registry artifacts are installed for the explicit discovery pass. Use
+`docs\Context-Menu-Verification.md` to complete visual and launcher acceptance before
+grouping or redesigning the menu set. Installer/uninstaller architecture remains
+deferred until that organization is agreed.

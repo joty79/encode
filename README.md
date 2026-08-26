@@ -89,6 +89,8 @@ pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\Folder' -Skip
 
 Το `Video\Repair-Mp4DisguisedTs.ps1` είναι terminal-only helper για `.mp4` files που στην πραγματικότητα είναι MPEG-TS container. Κάνει πρώτα fast container check, σταματάει αν το αρχείο είναι real MP4, και αν είναι disguised TS τρέχει no-reencode `TS -> MKV -> MP4` repair κρατώντας πάντα το source file. Σε αυτό το mode παραλείπει το `setts` timestamp rewrite by default για να μην αλλοιωθεί η πραγματική διάρκεια.
 
+Το `Video\join-wmv-smart.ps1` χρησιμοποιεί ASFBin για confirmed `.wmv` groups και γράφει `<clicked-base>_joined.wmv`. Το Explorer entry περιορίζεται πλέον σε `.wmv`, αρνείται υπάρχον output και ελέγχει ASFBin/ffprobe result. Η επιλογή των related filenames εξακολουθεί να χρειάζεται ανθρώπινη επιβεβαίωση.
+
 Για context-menu χρήση, έλεγξε πρώτα το αντίστοιχο `.reg` file και κάνε import μόνο όταν τα paths δείχνουν στο σωστό local checkout.
 
 ## Project Structure

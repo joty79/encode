@@ -29,6 +29,12 @@ if (-not [System.IO.File]::Exists($InputFile)) {
     exit 1
 }
 
+if ([System.IO.Path]::GetExtension($InputFile) -ine ".wmv") {
+    Write-Host "ERROR: Input must be a .wmv file" -ForegroundColor Red
+    Read-Host "Press ENTER to exit"
+    exit 1
+}
+
 # 🔸 FIX: .NET Paths
 $folder = [System.IO.Path]::GetDirectoryName($InputFile)
 $clickedBase = [System.IO.Path]::GetFileNameWithoutExtension($InputFile)
@@ -144,9 +150,9 @@ if (-not $related) {
 
     Write-Host ""
     Write-Host "Enter numbers to join (comma separated, e.g. 0,1):"
-    $input = Read-Host
+    $selectionText = Read-Host
 
-    $indexes = $input -split ',' |
+    $indexes = $selectionText -split ',' |
         ForEach-Object { $_.Trim() } |
         Where-Object { $_ -match '^\d+$' }
 
@@ -171,6 +177,13 @@ $related | ForEach-Object { Write-Host $_.Name }
 # 🔸 FIX: .NET Path Combine
 $outFile = [System.IO.Path]::Combine($folder, $clickedBase + "_joined.wmv")
 
+if ([System.IO.File]::Exists($outFile)) {
+    Write-Host "ERROR: Output already exists; refusing to overwrite it." -ForegroundColor Red
+    Write-Host $outFile
+    Read-Host "Press ENTER to exit"
+    exit 3
+}
+
 Write-Host ""
 Write-Host "Output file:"
 Write-Host $outFile
@@ -181,21 +194,56 @@ Read-Host "Press ENTER to start join"
 # --------------------------------------------------
 $asfbin = "C:\Program Files\CutAssist\asfbin\asfbin.exe"
 
-$args = @()
-foreach ($f in $related) {
-    $args += "-i"
-    $args += $f.FullName # FullName is safe, contains literal path
+if (-not [System.IO.File]::Exists($asfbin)) {
+    Write-Host "ERROR: ASFBin was not found:" -ForegroundColor Red
+    Write-Host $asfbin
+    Read-Host "Press ENTER to exit"
+    exit 4
 }
 
-$args += "-o"
-$args += $outFile
-$args += "-cvb"
-$args += "-istart"
-$args += "-u"
-$args += "-y"
+$asfbinArgs = @()
+foreach ($f in $related) {
+    $asfbinArgs += "-i"
+    $asfbinArgs += $f.FullName # FullName is safe, contains literal path
+}
+
+$asfbinArgs += "-o"
+$asfbinArgs += $outFile
+$asfbinArgs += "-cvb"
+$asfbinArgs += "-istart"
+$asfbinArgs += "-u"
 
 # Execute safely
-& $asfbin @args
+& $asfbin @asfbinArgs
+$asfbinExitCode = $LASTEXITCODE
+
+if ($asfbinExitCode -ne 0) {
+    if ([System.IO.File]::Exists($outFile)) {
+        Remove-Item -LiteralPath $outFile -Force
+    }
+    Write-Host "ERROR: ASFBin failed with exit code $asfbinExitCode" -ForegroundColor Red
+    Read-Host "Press ENTER to exit"
+    exit 5
+}
+
+if (-not [System.IO.File]::Exists($outFile) -or (Get-Item -LiteralPath $outFile).Length -le 0) {
+    if ([System.IO.File]::Exists($outFile)) {
+        Remove-Item -LiteralPath $outFile -Force
+    }
+    Write-Host "ERROR: ASFBin did not create a usable output file" -ForegroundColor Red
+    Read-Host "Press ENTER to exit"
+    exit 6
+}
+
+$probeOutput = & ffprobe.exe -v error -show_entries format=format_name,duration -of default=noprint_wrappers=1 $outFile 2>&1
+$probeExitCode = $LASTEXITCODE
+if ($probeExitCode -ne 0) {
+    Remove-Item -LiteralPath $outFile -Force
+    Write-Host "ERROR: ffprobe could not validate the joined WMV" -ForegroundColor Red
+    $probeOutput | Write-Host
+    Read-Host "Press ENTER to exit"
+    exit 7
+}
 
 Write-Host ""
 Write-Host "DONE ✔"

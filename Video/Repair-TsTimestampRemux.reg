@@ -2,18 +2,18 @@ Windows Registry Editor Version 5.00
 
 ; MPEG-TS timestamp tools for single .ts files
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.ts\shell\AnalyzeTsTimestamps]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.ts\shell\AnalyzeTsTimestamps]
 @="Analyze TS timestamps"
 "Icon"="D:\\Users\\joty79\\Documents\\Icons\\MediaInfo.ico"
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.ts\shell\AnalyzeTsTimestamps\command]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.ts\shell\AnalyzeTsTimestamps\command]
 @="wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -AnalyzeOnly -PauseAtEnd"
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.ts\shell\FixTsToMp4NoReencode]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.ts\shell\FixTsToMp4NoReencode]
 @="Fix TS -> MP4 (No re-encode)"
 "Icon"="D:\\Users\\joty79\\Documents\\Icons\\avidemux.ico"
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.ts\shell\FixTsToMp4NoReencode\command]
+[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.ts\shell\FixTsToMp4NoReencode\command]
 @="wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -SkipInputAnalysis -PauseAtEnd"
 
 ; Shift-only folder tools for all top-level .ts files in a folder
