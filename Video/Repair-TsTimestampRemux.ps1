@@ -267,7 +267,7 @@ function Get-TimestampStats {
         '-hide_banner',
         '-v', 'error',
         '-show_packets',
-        '-show_entries', 'packet=stream_index,pts_time,dts_time,duration_time,flags',
+        '-show_entries', 'packet=stream_index,pts_time,dts_time,duration_time',
         '-of', 'csv=p=0',
         $InputPath
     )
@@ -281,17 +281,20 @@ function Get-TimestampStats {
     $processInfo.UseShellExecute = $false
 
     $process = [System.Diagnostics.Process]::Start($processInfo)
-    $previousByStream = @{}
+    $previousDtsByStream = @{}
     $statsByStream = @{}
-    $ptsSamplesByStream = @{}
+    $ptsByStream = @{}
+    $durationByStream = @{}
+    $style = [Globalization.NumberStyles]::Float
+    $culture = [Globalization.CultureInfo]::InvariantCulture
 
     while (($line = $process.StandardOutput.ReadLine()) -ne $null) {
         if ([string]::IsNullOrWhiteSpace($line)) {
             continue
         }
 
-        $parts = $line -split ','
-        if ($parts.Count -lt 5) {
+        $parts = $line.Split(',')
+        if ($parts.Count -lt 4) {
             continue
         }
 
@@ -299,9 +302,6 @@ function Get-TimestampStats {
         $pts = 0.0
         $dts = 0.0
         $duration = 0.0
-        $style = [Globalization.NumberStyles]::Float
-        $culture = [Globalization.CultureInfo]::InvariantCulture
-
         if (-not [double]::TryParse($parts[1], $style, $culture, [ref]$pts)) {
             continue
         }
@@ -310,19 +310,17 @@ function Get-TimestampStats {
 
         if (-not $statsByStream.ContainsKey($streamIndex)) {
             $statsByStream[$streamIndex] = New-StreamStat -StreamIndex $streamIndex -FirstPts $pts
-            $ptsSamplesByStream[$streamIndex] = New-Object System.Collections.Generic.List[object]
+            $ptsByStream[$streamIndex] = [System.Collections.Generic.List[double]]::new()
+            $durationByStream[$streamIndex] = [System.Collections.Generic.List[double]]::new()
         }
 
         $stat = $statsByStream[$streamIndex]
         $stat.Packets++
-        $ptsSamplesByStream[$streamIndex].Add([pscustomobject]@{
-            Pts = $pts
-            Duration = $duration
-        }) | Out-Null
+        $ptsByStream[$streamIndex].Add($pts)
+        $durationByStream[$streamIndex].Add($duration)
 
-        if ($hasDts -and $previousByStream.ContainsKey($streamIndex)) {
-            $previous = $previousByStream[$streamIndex]
-            $dtsDelta = $dts - $previous.Dts
+        if ($hasDts -and $previousDtsByStream.ContainsKey($streamIndex)) {
+            $dtsDelta = $dts - [double]$previousDtsByStream[$streamIndex]
             if ($dtsDelta -lt 0) {
                 $stat.DtsBackwards++
             }
@@ -332,9 +330,7 @@ function Get-TimestampStats {
         }
 
         if ($hasDts) {
-            $previousByStream[$streamIndex] = [pscustomobject]@{
-                Dts = $dts
-            }
+            $previousDtsByStream[$streamIndex] = $dts
         }
     }
 
@@ -347,23 +343,24 @@ function Get-TimestampStats {
     # ffprobe emits packets in decode/demux order. H.264 B-frames therefore
     # commonly have PTS values that go backwards even when the media is healthy.
     # Analyze PTS cadence in presentation order; keep DTS checks in packet order.
-    foreach ($streamIndex in $ptsSamplesByStream.Keys) {
+    foreach ($streamIndex in $ptsByStream.Keys) {
         $stat = $statsByStream[$streamIndex]
-        $orderedSamples = @($ptsSamplesByStream[$streamIndex] | Sort-Object Pts)
-        if ($orderedSamples.Count -eq 0) {
+        [double[]]$orderedPts = $ptsByStream[$streamIndex].ToArray()
+        [double[]]$orderedDurations = $durationByStream[$streamIndex].ToArray()
+        if ($orderedPts.Count -eq 0) {
             continue
         }
 
-        $stat.FirstPts = $orderedSamples[0].Pts
-        $stat.LastPts = $orderedSamples[$orderedSamples.Count - 1].Pts
-        for ($sampleIndex = 1; $sampleIndex -lt $orderedSamples.Count; $sampleIndex++) {
-            $previousSample = $orderedSamples[$sampleIndex - 1]
-            $sample = $orderedSamples[$sampleIndex]
-            $ptsDelta = $sample.Pts - $previousSample.Pts
-            $expectedDuration = if ($sample.Duration -gt 0) {
-                $sample.Duration
-            } elseif ($previousSample.Duration -gt 0) {
-                $previousSample.Duration
+        [Array]::Sort($orderedPts, $orderedDurations)
+
+        $stat.FirstPts = $orderedPts[0]
+        $stat.LastPts = $orderedPts[$orderedPts.Count - 1]
+        for ($sampleIndex = 1; $sampleIndex -lt $orderedPts.Count; $sampleIndex++) {
+            $ptsDelta = $orderedPts[$sampleIndex] - $orderedPts[$sampleIndex - 1]
+            $expectedDuration = if ($orderedDurations[$sampleIndex] -gt 0) {
+                $orderedDurations[$sampleIndex]
+            } elseif ($orderedDurations[$sampleIndex - 1] -gt 0) {
+                $orderedDurations[$sampleIndex - 1]
             } else {
                 0.033367
             }

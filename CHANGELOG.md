@@ -2,6 +2,10 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-08-27
+
+- Optimized the TS timestamp analyzer without changing its full-packet coverage or detection rules. Typed numeric packet storage and native array sorting replaced per-packet PowerShell objects plus `Sort-Object`: the current 243 MB `1.ts` improved from 4.061 s to 0.845 s, while a 3.75 GiB/767,217-packet `2.ts` improved from 78.825 s to 5.856 s. A two-file folder scan completed in 5.850 s. Focused TS safety, smoke and exit-code tests pass under PowerShell 7 and Windows PowerShell 5.1.
+
 ## 2026-08-26
 
 - Imported all 19 current Explorer `.reg` artifacts for an explicit Windows 11 discovery pass and added a durable visual verification matrix before menu organization. Moved the TS and subtitle file verbs to explicit machine-wide `SystemFileAssociations` after real Explorer evidence showed the former per-user entries were enumerated by Shell APIs but not rendered. Renamed the multi-selection tweak to `Explorer-MultiSelectLimit.reg`, removed its inert empty handler key, and installed `MultipleInvokePromptMinimum=100`.

@@ -167,6 +167,22 @@ It also treats heavy video cadence jitter as `PROBLEM`, because `2.ts` proved th
 
 PTS cadence is evaluated in sorted presentation order. FFprobe emits H.264 packets in decode/demux order, where B-frames can naturally make PTS values appear to go backwards; treating that packet ordering as corruption caused healthy H.264 TS files to be moved. DTS monotonicity remains checked in packet order, while duplicate PTS, gaps, and cadence are checked in presentation order.
 
+### Packet-scan performance (2026-08-27)
+
+The timestamp rules did not change, but packet storage and presentation-order sorting were optimized. The old implementation created one PowerShell object per packet and used `Sort-Object`; the current implementation stores PTS/duration values in typed `double` lists and uses native array sorting.
+
+Measured on the current Windows 11 host:
+
+| Input | Packets | Before | After | Improvement |
+| --- | ---: | ---: | ---: | ---: |
+| Current Desktop `1.ts` (243,420,708 bytes, 10:05.600) | 46,446 | 4.061 s | 0.845 s | 4.8× |
+| Current Desktop `2.ts` (4,027,285,804 bytes, 2:46:21.286) | 767,217 | 78.825 s | 5.856 s | 13.5× |
+| Folder scan containing both files | 813,663 | approximately 83 s from individual baselines | 5.850 s | approximately 14× |
+
+Both files were classified `OK`. The current `2.ts` has SHA-256 `1D12BDD04999D722EF00B81B28FF63BCD7F4EC94836F4C8D7C93E262D527C80B`, 299,367 video packets and only four cadence deviations. It is not interchangeable with the older historical `2.ts` evidence above, which recorded 319,932 video packets and heavy cadence jitter; the matching filename alone is not fixture identity.
+
+Focused TS safety, smoke and exit-code suites pass under PowerShell 7 and Windows PowerShell 5.1 after the optimization. The scan remains a full packet pass, not sampling, and folder scans remain sequential to avoid unnecessary concurrent disk pressure.
+
 ## Known Limits
 
 | Limit | Note |
