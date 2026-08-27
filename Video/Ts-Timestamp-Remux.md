@@ -148,6 +148,12 @@ The registry file is:
 Video\Repair-TsTimestampRemux.reg
 ```
 
+Registry import/readback and visible Explorer labels diverged during a controlled
+Windows 11 rename experiment. The evidence, failed invalidation methods and
+continuation checklist are recorded in
+`docs\Ts-Context-Menu-Registry-Investigation.md`. Registry success alone is not
+visual acceptance.
+
 It adds two normal `.ts` file actions:
 
 ```text
