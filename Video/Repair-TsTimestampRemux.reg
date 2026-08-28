@@ -1,5 +1,9 @@
 Windows Registry Editor Version 5.00
 
+; Deploy from an interactive user PowerShell on this host:
+; gsudo.exe --direct reg.exe import 'D:\Users\joty79\scripts\encode\Video\Repair-TsTimestampRemux.reg'
+; Registry readback is not acceptance; verify the real Explorer file and Shift-folder menus.
+
 ; MPEG-TS timestamp tools for single .ts files
 
 [HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.ts\shell\AnalyzeTsTimestamps]
