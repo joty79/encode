@@ -44,6 +44,31 @@ pwsh -File '.\tools\Test-EncodeEnvironment.ps1'
 
 Το command επιστρέφει exit code `1` όταν λείπει required dependency, αλλά δεν εγκαθιστά και δεν αλλάζει τίποτα. Η ανακατασκευή του known-good AviSynth+/QTGMC environment βρίσκεται στο `docs/AviSynth-QTGMC-Recovery.md` και το συνολικό project plan στο `docs/Re-Onboarding-Plan.md`.
 
+Για read-only σύγκριση όλων των repository context-menu definitions με το
+πραγματικό HKLM/HKCU state:
+
+```powershell
+pwsh -File '.\tools\Test-EncodeContextMenus.ps1' -OutputDirectory '.\docs'
+```
+
+Το generated `docs\Context-Menu-Inventory.md` είναι η human-readable απογραφή
+και το αντίστοιχο JSON κρατά το πλήρες machine-readable evidence. Το audit δεν
+αλλάζει Registry keys και δεν υποκαθιστά το πραγματικό visual Explorer check.
+
+Το οργανωμένο `Media Tools [PREVIEW]` menu ορίζεται declaratively στο
+`config\MediaTools-Menu.json`. Το παρακάτω command επικυρώνει ότι καλύπτονται
+όλα τα current direct actions με ακριβώς τα ίδια launcher commands, ελέγχει το
+όριο παιδιών ανά επίπεδο και δημιουργεί idempotent install/remove `.reg`
+artifacts χωρίς να τα κάνει import:
+
+```powershell
+pwsh -File '.\tools\New-MediaToolsMenu.ps1'
+```
+
+Το generated coverage evidence βρίσκεται στο
+`docs\Media-Tools-Menu-Coverage.json`. Registry import και Explorer acceptance
+είναι ξεχωριστά βήματα.
+
 Για σύντομη περιγραφή κάθε PowerShell script, classification, test evidence και
 γνωστό regression risk, δες `docs/PowerShell-Tool-Guide.md`.
 
@@ -73,7 +98,26 @@ pwsh -File '.\Video\Repair-DamagedVideo.ps1' -Path 'C:\Path\To\damaged.mp4' -Out
 
 Οι λεπτομέρειες του prototype και τα known limits βρίσκονται στο `Video\Damaged-Video-Repair.md`.
 
-Παράδειγμα 5: Διάγνωση και no-reencode repair για MPEG-TS timestamp προβλήματα που χαλάνε seekbar ή Avidemux MP4 save:
+Παράδειγμα 5: Ανάκτηση H.264 και experimental original AAC από ημιτελές
+Microsoft-encoder MP4 που σταμάτησε μέσα στο `mdat` πριν γραφτεί το `moov`:
+```powershell
+pwsh -File '.\Video\Recover-IncompleteMp4.ps1' -Path 'D:\Path\To\unfinished.mp4'
+pwsh -File '.\Video\Recover-IncompleteMp4.ps1' -Path 'D:\Path\To\unfinished.mp4' -VideoOnly
+```
+
+Το source διατηρείται πάντα και existing output δεν αντικαθίσταται. Το εργαλείο
+είναι σκόπιμα narrow και δεν εφαρμόζεται σε arbitrary broken MP4. Δες
+`Video\Incomplete-MP4-Recovery.md` για scope, audio limitations και το πραγματικό
+`1x.mp4` acceptance test.
+
+Το `Video\Recover-IncompleteMp4.reg` προσθέτει το machine-wide classic Explorer
+action `Recover incomplete MP4` μόνο σε `.mp4` files. Χρειάζεται elevated import,
+βρίσκεται κάτω από `Show more options` και κρατά το Windows Terminal ανοιχτό για
+να μπορεί να ελεγχθεί το αποτέλεσμα. Το machine-wide scope είναι σκόπιμο: το
+per-user verb έκανε enumerate αλλά δεν εμφανίστηκε στο πραγματικό Explorer menu
+αυτού του Windows 11 host.
+
+Παράδειγμα 6: Διάγνωση και no-reencode repair για MPEG-TS timestamp προβλήματα που χαλάνε seekbar ή Avidemux MP4 save:
 ```powershell
 pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\source.ts' -AnalyzeOnly
 pwsh -File '.\Video\Repair-TsTimestampRemux.ps1' -Path 'C:\Path\To\source.ts' -SkipInputAnalysis

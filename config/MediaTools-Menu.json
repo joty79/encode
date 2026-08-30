@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "state": "production",
+  "rootVerb": "MediaTools",
+  "cleanupRootVerbs": ["MediaToolsPreview"],
+  "rootLabel": "Media Tools",
+  "rootIcon": "root",
+  "sourceRegFile": "Video/Media-Tools.reg",
+  "removalRegFile": "Video/Remove-Media-Tools.reg",
+  "maxVisibleChildrenPerLevel": 15,
+  "icons": {
+    "root": "D:\\Users\\joty79\\Documents\\Icons\\videos.ico",
+    "inspect": "D:\\Users\\joty79\\Documents\\Icons\\MediaInfo.ico",
+    "video": "D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico",
+    "audio": "D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico",
+    "subtitles": "D:\\Users\\joty79\\Documents\\Icons\\SubtitleEdit.ico",
+    "ts-analyze": "D:\\Users\\joty79\\Documents\\Icons\\MediaInfo.ico",
+    "repair": "D:\\Users\\joty79\\Documents\\Icons\\avidemux.ico",
+    "mkv": "D:\\Users\\joty79\\Documents\\Icons\\mkvmerge.ico",
+    "wmv": "D:\\Users\\joty79\\Documents\\Icons\\CutAssist.ico",
+    "images": "D:\\Users\\joty79\\Documents\\Icons\\convert.ico",
+    "extract-icon": "D:\\Users\\joty79\\Documents\\Icons\\ResourceHacker.ico",
+    "queues": "D:\\Users\\joty79\\Documents\\Icons\\pwsh.ico",
+    "folder": "D:\\Users\\joty79\\Documents\\Icons\\ffmpeg_folder.ico",
+    "check-audio": "D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
+  },
+  "actions": {
+    "inspect-file": {
+      "label": "MediaInfo",
+      "icon": "inspect",
+      "coversVerb": "MediaInfo",
+      "command": "wt.exe -w 0 new-tab pwsh -NoExit -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\inspector\\inspect.ps1\" \"%1\""
+    },
+    "inspect-folder": {
+      "label": "MediaInfo",
+      "icon": "inspect",
+      "coversVerb": "MediaInfo",
+      "command": "wt.exe -w 0 new-tab pwsh -NoExit -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\inspector\\inspect.ps1\" \"%1\""
+    },
+    "encode-video-file": {
+      "label": "Encode Video",
+      "icon": "video",
+      "coversVerb": "EncodeNvidiaH264",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%1\""
+    },
+    "encode-video-folder": {
+      "label": "Encode Folder",
+      "icon": "folder",
+      "coversVerb": "EncodeNvidiaH264",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\video_encode.ps1\" \"%V\""
+    },
+    "merge-mp4-srt": {
+      "label": "Merge Matching SRT -> MKV",
+      "icon": "mkv",
+      "coversVerb": "MKV Merge",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Merge-MP4-SRT.ps1\" \"%1\" -PauseAtEnd"
+    },
+    "recover-incomplete-mp4": {
+      "label": "Recover Incomplete MP4",
+      "icon": "repair",
+      "coversVerb": "RecoverIncompleteMp4",
+      "command": "wt.exe -w 0 new-tab -- pwsh.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Recover-IncompleteMp4.ps1\" -Path \"%1\""
+    },
+    "remux-mkv-mp4": {
+      "label": "Remux to MP4 (Safe Mode)",
+      "icon": "repair",
+      "coversVerb": "RemuxToMP4",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\RemuxToMP4.ps1\" -InputFile \"%1\" -PauseAtEnd"
+    },
+    "join-wmv": {
+      "label": "Join WMV (Smart / ASFBin)",
+      "icon": "wmv",
+      "coversVerb": "JoinWMVSmart",
+      "command": "wt.exe -p \"PowerShell\" pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\join-wmv-smart.ps1\" \"%1\""
+    },
+    "audio-file": {
+      "label": "Extract / Convert Audio",
+      "icon": "audio",
+      "coversVerb": "AudioEncode",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\audio_encode.ps1\" -InputFile \"%1\""
+    },
+    "convert-audio-file": {
+      "label": "Convert Audio Format",
+      "icon": "audio",
+      "coversVerb": "AudioEncode",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\audio_encode.ps1\" -InputFile \"%1\""
+    },
+    "audio-folder": {
+      "label": "Extract / Convert Audio",
+      "icon": "audio",
+      "coversVerb": "AudioEncode",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\audio_encode.ps1\" \"%V\""
+    },
+    "replace-audio-mp4": {
+      "label": "Replace Audio (AAC)",
+      "icon": "audio",
+      "coversVerb": "replace_audio_aac",
+      "command": "wt -w 0 pwsh -NoExit -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\Replace-Audio-MP4.ps1\" \"%1\""
+    },
+    "extract-mkv-subtitle": {
+      "label": "Extract Subtitle -> SRT",
+      "icon": "subtitles",
+      "coversVerb": "ExtractSubtitle",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Extract-MKV-Subtitle.vbs\" \"%1\""
+    },
+    "convert-vtt-srt": {
+      "label": "Convert VTT to SRT",
+      "icon": "subtitles",
+      "coversVerb": "ConvertToSRT",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Convert-to-SRT.vbs\" \"%1\""
+    },
+    "convert-vtt-srt-folder": {
+      "label": "Convert VTT to SRT",
+      "icon": "subtitles",
+      "coversVerb": "ConvertToSRT",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Convert-to-SRT.vbs\" \"%1\""
+    },
+    "convert-vtt-srt-background": {
+      "label": "Convert VTT to SRT",
+      "icon": "subtitles",
+      "coversVerb": "ConvertToSRT",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Convert-to-SRT.vbs\" \"%V\""
+    },
+    "analyze-ts-file": {
+      "label": "Analyze Timestamps",
+      "icon": "ts-analyze",
+      "coversVerb": "AnalyzeTsTimestamps",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -AnalyzeOnly -PauseAtEnd"
+    },
+    "fix-ts-file": {
+      "label": "Fix TS -> MP4 (No Re-encode)",
+      "icon": "repair",
+      "coversVerb": "FixTsToMp4NoReencode",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -SkipInputAnalysis -PauseAtEnd"
+    },
+    "analyze-ts-folder-selected": {
+      "label": "Analyze TS Files",
+      "icon": "ts-analyze",
+      "coversVerb": "AnalyzeTsTimestamps",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -AnalyzeOnly -MoveProblemFiles -PauseAtEnd"
+    },
+    "fix-ts-folder-selected": {
+      "label": "Fix TS Files",
+      "icon": "repair",
+      "coversVerb": "FixTsToMp4NoReencode",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%1\" -SkipInputAnalysis -PauseAtEnd"
+    },
+    "analyze-ts-folder-background": {
+      "label": "Analyze TS Files",
+      "icon": "ts-analyze",
+      "coversVerb": "AnalyzeTsTimestamps",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%V\" -AnalyzeOnly -MoveProblemFiles -PauseAtEnd"
+    },
+    "fix-ts-folder-background": {
+      "label": "Fix TS Files",
+      "icon": "repair",
+      "coversVerb": "FixTsToMp4NoReencode",
+      "command": "wt.exe -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\Repair-TsTimestampRemux.ps1\" -Path \"%V\" -SkipInputAnalysis -PauseAtEnd"
+    },
+    "smart-image-file": {
+      "label": "Smart Image Conversion",
+      "icon": "images",
+      "coversVerb": "ConvertWebPSmart",
+      "command": "wt.exe -p \"PowerShell\" pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\convert_webp_smart.ps1\" \"%1\" -PauseAtEnd"
+    },
+    "smart-image-folder": {
+      "label": "Smart Image Conversion",
+      "icon": "images",
+      "coversVerb": "ConvertWebPSmart",
+      "command": "wt.exe -p \"PowerShell\" pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\convert_webp_smart.ps1\" \"%V\" -PauseAtEnd"
+    },
+    "convert-icon": {
+      "label": "Convert to .ico",
+      "icon": "images",
+      "coversVerb": "ConvertToICO",
+      "command": "pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
+    },
+    "extract-exe-icon": {
+      "label": "Extract EXE Icon -> ICO",
+      "icon": "extract-icon",
+      "coversVerb": "Extract Icon",
+      "command": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\Extract-Exe-Icon.ps1\" \"%1\""
+    },
+    "check-audio-folder-selected": {
+      "label": "Check Audio and Move",
+      "icon": "check-audio",
+      "coversVerb": "MoveNoAudio",
+      "command": "wt.exe pwsh.exe -NoProfile -NoExit -File \"D:\\Users\\joty79\\scripts\\encode\\no_audio\\Move-NoAudio.ps1\" -TargetDirectory \"%V\""
+    },
+    "check-audio-folder-background": {
+      "label": "Check Video Files for Audio",
+      "icon": "check-audio",
+      "coversVerb": "MoveNoAudio",
+      "command": "wt.exe pwsh.exe -NoProfile -NoExit -File \"D:\\Users\\joty79\\scripts\\encode\\no_audio\\Move-NoAudio.ps1\" -TargetDirectory \"%V\""
+    },
+    "add-video-file": {
+      "label": "Add to Video Queue",
+      "icon": "video",
+      "coversVerb": "AddToEncodeQueue",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\Video\\silent_runner.vbs\" \"%1\""
+    },
+    "add-video-folder": {
+      "label": "Add Folder to Video Queue",
+      "icon": "video",
+      "coversVerb": "AddToEncodeQueue",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\Video\\silent_runner.vbs\" \"%V\""
+    },
+    "add-audio-file": {
+      "label": "Add to Audio Queue",
+      "icon": "audio",
+      "coversVerb": "AddToAudioQueue",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%1\""
+    },
+    "add-audio-folder": {
+      "label": "Add Folder to Audio Queue",
+      "icon": "audio",
+      "coversVerb": "AddToAudioQueue",
+      "command": "wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\audio\\silent_runner.vbs\" \"%V\""
+    },
+    "run-video-queue": {
+      "label": "Run Video Queue",
+      "icon": "video",
+      "coversVerb": "RunEncodeQueue",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\run_queue.ps1\" \"%V\""
+    },
+    "run-audio-queue": {
+      "label": "Run Audio Queue",
+      "icon": "audio",
+      "coversVerb": "RunAudioQueue",
+      "command": "wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\run_audio_queue.ps1\" \"%V\""
+    }
+  },
+  "profiles": {
+    "audio": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "02_ConvertAudio", "actions": ["convert-audio-file"] },
+      { "id": "90_AddAudioFile", "separatorBefore": true, "actions": ["add-audio-file"] }
+    ],
+    "video-common": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
+      { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
+      { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
+    ],
+    "mp4": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "merge-mp4-srt", "recover-incomplete-mp4"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file", "replace-audio-mp4"] },
+      { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
+      { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
+    ],
+    "mkv": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "02_ExtractSubtitle", "actions": ["extract-mkv-subtitle"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "remux-mkv-mp4"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
+      { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
+      { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
+    ],
+    "ts": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "analyze-ts-file", "fix-ts-file"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
+      { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
+      { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
+    ],
+    "wmv": [
+      { "id": "01_Inspect", "actions": ["inspect-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "join-wmv"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
+      { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
+      { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
+    ],
+    "image-smart": [
+      { "id": "01_SmartImage", "actions": ["smart-image-file"] }
+    ],
+    "image-icon": [
+      { "id": "01_ConvertIcon", "actions": ["convert-icon"] }
+    ],
+    "webp": [
+      { "id": "01_SmartImage", "actions": ["smart-image-file"] },
+      { "id": "02_ConvertIcon", "actions": ["convert-icon"] }
+    ],
+    "exe": [
+      { "id": "01_ExtractIcon", "actions": ["extract-exe-icon"] }
+    ],
+    "vtt": [
+      { "id": "01_ConvertVtt", "actions": ["convert-vtt-srt"] }
+    ],
+    "folder": [
+      { "id": "01_Inspect", "actions": ["inspect-folder"] },
+      { "id": "02_ConvertVtt", "actions": ["convert-vtt-srt-folder"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-folder", "analyze-ts-folder-selected", "fix-ts-folder-selected", "smart-image-folder"] },
+      { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-folder", "check-audio-folder-selected"] },
+      { "id": "90_AddVideoFolder", "separatorBefore": true, "actions": ["add-video-folder"] },
+      { "id": "91_AddAudioFolder", "actions": ["add-audio-folder"] }
+    ],
+    "folder-background": [
+      { "id": "01_CheckAudio", "actions": ["check-audio-folder-background"] },
+      { "id": "02_AnalyzeTs", "actions": ["analyze-ts-folder-background"] },
+      { "id": "03_FixTs", "actions": ["fix-ts-folder-background"] },
+      { "id": "04_ConvertVtt", "actions": ["convert-vtt-srt-background"] },
+      { "id": "05_RunVideoQueue", "separatorBefore": true, "actions": ["run-video-queue"] },
+      { "id": "06_RunAudioQueue", "actions": ["run-audio-queue"] }
+    ]
+  },
+  "bindings": [
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".aac", ".ac3", ".dts", ".flac", ".m4a", ".mp3", ".ogg", ".opus", ".wav", ".wma"], "profile": "audio" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".avi", ".flv", ".m2ts", ".mov", ".mpeg", ".mpg", ".vob", ".webm"], "profile": "video-common" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".mp4"], "profile": "mp4" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".mkv"], "profile": "mkv" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".ts"], "profile": "ts" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".wmv"], "profile": "wmv" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".avif", ".heic", ".heif"], "profile": "image-smart" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".bmp", ".jpeg", ".jpg", ".png"], "profile": "image-icon" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".webp"], "profile": "webp" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".exe"], "profile": "exe" },
+    { "hive": "HKLM", "targetType": "Extension", "targets": [".vtt"], "profile": "vtt" },
+    { "hive": "HKCU", "targetType": "Folder", "targets": ["Directory"], "profile": "folder" },
+    { "hive": "HKCU", "targetType": "FolderBackground", "targets": ["Directory\\Background"], "profile": "folder-background", "rootIcon": "root" }
+  ]
+}

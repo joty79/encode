@@ -59,6 +59,31 @@ function Get-ImageFrameCount {
         [Parameter(Mandatory = $true)][string]$InputPath
     )
 
+    if (-not $script:ffprobePath) {
+        try {
+            $script:ffprobePath = Resolve-Application -Name 'ffprobe'
+        } catch {}
+    }
+
+    # 1. Fast probe via ffprobe to detect animated containers without loading all frames into RAM
+    if ($script:ffprobePath) {
+        $probeOut = @(& $script:ffprobePath -v error -show_entries format=format_name -show_entries stream=codec_name -of json $InputPath 2>&1)
+        if ($LASTEXITCODE -eq 0 -and $probeOut.Count -gt 0) {
+            try {
+                $json = ($probeOut -join "`n") | ConvertFrom-Json
+                if ($json.format.format_name -match 'webp_anim|gif|apng') {
+                    return 2
+                }
+                foreach ($s in $json.streams) {
+                    if ($s.codec_name -match 'webp_anim|gif|apng') {
+                        return 2
+                    }
+                }
+            } catch {}
+        }
+    }
+
+    # 2. ImageMagick identify with fallback
     $identifyOutput = @(& $MagickPath identify `
         -limit thread 4 `
         -limit memory 768MiB `
@@ -68,33 +93,54 @@ function Get-ImageFrameCount {
         -format '%n\n' $InputPath 2>&1)
     $identifyExitCode = $LASTEXITCODE
 
-    if ($identifyExitCode -ne 0 -or $identifyOutput.Count -eq 0) {
-        throw "Image identification failed with exit code $identifyExitCode. $($identifyOutput -join [Environment]::NewLine)"
+    if ($identifyExitCode -eq 0 -and $identifyOutput.Count -gt 0) {
+        $frameCountText = $identifyOutput[0].ToString().Trim()
+        $frameCount = 0
+        if ([int]::TryParse($frameCountText, [ref]$frameCount) -and $frameCount -ge 1) {
+            return $frameCount
+        }
     }
 
-    $frameCountText = $identifyOutput[0].ToString().Trim()
-    $frameCount = 0
-    if (-not [int]::TryParse($frameCountText, [ref]$frameCount) -or $frameCount -lt 1) {
-        throw "ImageMagick returned an invalid frame count: $frameCountText"
+    # 3. If ImageMagick failed due to huge frame list on an animated file, check if ffprobe can decode frames
+    if ($identifyOutput -join ' ' -match 'list length exceeds limit') {
+        return 2
     }
 
-    return $frameCount
+    throw "Image identification failed with exit code $identifyExitCode. $($identifyOutput -join [Environment]::NewLine)"
+}
+
+function Test-HasTransparency {
+    param(
+        [Parameter(Mandatory = $true)][string]$MagickPath,
+        [Parameter(Mandatory = $true)][string]$InputPath
+    )
+
+    $opaqueCheck = @(& $MagickPath identify -format '%[opaque]' $InputPath 2>&1)
+    if ($LASTEXITCODE -eq 0 -and $opaqueCheck.Count -gt 0) {
+        $val = ($opaqueCheck -join '').Trim()
+        if ($val -eq 'False') {
+            return $true
+        }
+    }
+    return $false
 }
 
 function Convert-StaticImage {
     param(
         [Parameter(Mandatory = $true)][string]$MagickPath,
         [Parameter(Mandatory = $true)][string]$InputPath,
-        [Parameter(Mandatory = $true)][string]$OutputPath
+        [Parameter(Mandatory = $true)][string]$OutputPath,
+        [Parameter(Mandatory = $true)][string]$TargetFormat
     )
 
+    $quality = if ($TargetFormat -eq 'PNG') { 95 } else { 90 }
     $convertOutput = @(& $MagickPath `
         -limit thread 4 `
         -limit memory 768MiB `
         -limit map 2GiB `
         -limit disk 2GiB `
         -limit time 240 `
-        $InputPath -quality 85 $OutputPath 2>&1)
+        $InputPath -quality $quality $OutputPath 2>&1)
     $convertExitCode = $LASTEXITCODE
 
     if ($convertExitCode -ne 0) {
@@ -105,7 +151,8 @@ function Convert-StaticImage {
     $validationOutput = @(& $MagickPath identify -format '%m %w %h' $OutputPath 2>&1)
     $validationExitCode = $LASTEXITCODE
     $validationText = ($validationOutput -join ' ').Trim()
-    if ($validationExitCode -ne 0 -or $validationText -notmatch '^JPEG\s+\d+\s+\d+$') {
+    $pattern = if ($TargetFormat -eq 'PNG') { '^PNG\s+\d+\s+\d+$' } else { '^JPEG\s+\d+\s+\d+$' }
+    if ($validationExitCode -ne 0 -or $validationText -notmatch $pattern) {
         Remove-FailedOutput -OutputPath $OutputPath
         throw "Static output validation failed. $validationText"
     }
@@ -230,15 +277,19 @@ foreach ($filePath in $files) {
             Write-Host "MP4 created: $outputPath" -ForegroundColor Green
         }
         else {
+            $hasTrans = Test-HasTransparency -MagickPath $magickPath -InputPath $filePath
+            $targetFormat = if ($hasTrans) { 'PNG' } else { 'JPEG' }
+            $targetExt = if ($hasTrans) { 'png' } else { 'jpg' }
+
             $outputDir = [System.IO.Path]::Combine($baseDir, 'converted')
-            $outputPath = [System.IO.Path]::Combine($outputDir, "$fileBaseName.jpg")
+            $outputPath = [System.IO.Path]::Combine($outputDir, "$fileBaseName.$targetExt")
             if ([System.IO.File]::Exists($outputPath)) {
                 throw "Output already exists; nothing was overwritten: $outputPath"
             }
             $outputCanBeRemoved = $true
             [void][System.IO.Directory]::CreateDirectory($outputDir)
-            Convert-StaticImage -MagickPath $magickPath -InputPath $filePath -OutputPath $outputPath
-            Write-Host "JPG created: $outputPath" -ForegroundColor Green
+            Convert-StaticImage -MagickPath $magickPath -InputPath $filePath -OutputPath $outputPath -TargetFormat $targetFormat
+            Write-Host "$targetFormat created: $outputPath" -ForegroundColor Green
         }
 
         $successCount++

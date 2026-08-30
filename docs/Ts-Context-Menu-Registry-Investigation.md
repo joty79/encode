@@ -11,8 +11,40 @@ Video\Repair-TsTimestampRemux.reg
 
 The investigation began after Registry imports and Explorer refresh commands
 reported success while the visible context-menu label did not change. The goal
-was to separate Registry state from actual Explorer behavior. The underlying
-cause is not yet resolved.
+was to separate Registry state from actual Explorer behavior. The exact cause
+of those original stale-label observations remains unresolved, but the later
+controlled tests recorded below disprove an agent-versus-user import
+restriction.
+
+## 2026-08-29 Resolution Addendum
+
+Two fresh-key tests closed the execution-context question:
+
+1. An agent-only import created unique flat verbs under machine-wide `.mp4` and
+   per-user selected-folder locations. The user confirmed both in the real
+   classic Explorer menu.
+2. A second agent-only import created a fresh per-user selected-folder cascade
+   named `Media Tools [CLAUDE CASCADE TEST]`, using `SubCommands=""` and two
+   child verbs. The user screenshot confirmed the parent and both children.
+
+Neither test used a user-run import, Explorer restart or `SHChangeNotify`.
+Pre-test absence, post-import Registry state and post-test cleanup were all
+verified. The temporary flat and cascade probe keys are absent from both their
+direct locations and the merged `HKCR` view.
+
+Therefore, agent-initiated Registry imports can create visible flat and nested
+Explorer verbs on this machine. The earlier observation did **not** prove an
+execution-context restriction. Its exact cause remains unresolved. The folder
+preview root was new during its original non-appearance, so stale duplicate
+children cannot explain that first result.
+
+Later, after several revisions reused the same preview root and renamed/reordered
+its children, the installed selected-folder cascade accumulated stale duplicate
+branches because Registry imports do not delete omitted keys. This was a
+separate cleanup problem, not the cause of the original non-appearance. A
+single re-import of the now-idempotent preview source removed those branches.
+Registry readback then showed exactly `01_Inspect`, `10_Process`, `20_TsTools`
+and `30_Queues`, with `Queues` last.
 
 ## Production State
 
@@ -87,8 +119,8 @@ Explorer menu:
 5. The user ran the same `gsudo reg.exe import` command again. Explorer then
    displayed `[AGENT-COMMAND-TEST]` immediately.
 
-This proves an execution-context difference for the folder verb on this host.
-It does not yet identify the responsible Windows component or side effect.
+This was the original observation. The fresh-key tests in the resolution
+addendum show that it does not prove a general execution-context difference.
 
 ### Normal `.ts` file verb
 
@@ -123,10 +155,12 @@ but the exact cache and invalidation rule remain unproven.
 - The copied clean TS fixtures used by performance work do not test broken-file
   detection or repair.
 
-## Continuation Checklist
+## Historical Continuation Checklist
 
-Use a fresh, unique marker for every step and inspect file and folder menus
-separately.
+The first item below was completed by the 2026-08-29 flat-verb and cascade
+tests. The remaining items are retained only if the stale-label behavior needs
+deeper diagnosis later. Use a fresh, unique marker for every step and inspect
+file and folder menus separately.
 
 1. **Test a new internal verb key instead of renaming the existing key.** Add a
    temporary `AnalyzeTsTimestampsProbe` key with a unique visible label. If a

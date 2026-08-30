@@ -407,7 +407,7 @@ function Invoke-FFmpegWithProgress {
 # ===============================
 # FILE COLLECTION
 # ===============================
-$extensions = "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.mpg", "*.mpeg", "*.vob"
+$extensions = "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.mpg", "*.mpeg", "*.vob", "*.ts"
 
 # 🔸 FIX: LiteralPath
 if (Test-Path -LiteralPath $TargetPath -PathType Leaf) {

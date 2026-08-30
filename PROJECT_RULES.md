@@ -15,6 +15,10 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 
 - Confirm active repo path before reads/edits: `D:\Users\joty79\scripts\encode`.
 - Review `.reg` files carefully before import or edits, especially absolute script paths and wildcard registry keys.
+- Use `tools\Test-EncodeContextMenus.ps1` plus its generated JSON inventory for read-only repository/live completeness checks; do not infer completeness from import exit codes or from memory of visible labels.
+- Treat `config\ContextMenu-Catalog.json` as the canonical classification of existing `.reg` artifacts and `config\MediaTools-Menu.json` as the canonical organized-preview layout. Generate preview install/remove artifacts through `tools\New-MediaToolsMenu.ps1`; do not hand-maintain a second layout.
+- Keep current direct menus installed until the generated organized replacement has zero legacy-coverage gaps, exact Registry tree verification, and explicit real-Explorer visual acceptance. Registry readback alone cannot authorize their removal.
+- Before a final context-menu installer becomes canonical, migrate ambiguous `HKEY_CLASSES_ROOT` definitions to explicit HKLM/HKCU ownership, verify exact owned trees after one elevated session, enforce the per-level child budget, and retain real Explorer visual acceptance.
 - Do not track runtime queue state, logs, or machine-local generated archives.
 - After PowerShell script edits, run parser validation before runtime testing when command execution is allowed.
 - Preserve source `.ts` files by default during timestamp remux. Deletion requires explicit `-DeleteSource`, a clean FFmpeg verification with no warning/error output, and clean output timestamp checks; `-NoVerify` must block deletion.
@@ -24,6 +28,15 @@ Long-lived project memory for `D:\Users\joty79\scripts\encode`.
 - Media-moving helpers must refuse destination collisions instead of overwriting an existing file.
 
 ## Decisions
+
+### 2026-08-28 - Truncated Microsoft MP4 recovery is a narrow source-preserving workflow
+
+- Date: 2026-08-28
+- Problem: A JDownloader transfer stopped inside the MP4 `mdat`; the final `moov` index and roughly 73 MiB of declared tail data were absent, so normal players could not identify the streams.
+- Root cause: This Microsoft H.264 Encoder layout stores length-prefixed H.264 and interleaved raw AAC before writing its final sample tables. Renaming `.part` to `.mp4` cannot replace the missing index or the bytes that never downloaded.
+- Guardrail/rule: Keep this separate from generic damaged-video and TS repair. Accept only the characterized Microsoft signature/layout, preserve source unconditionally, refuse healthy/unknown MP4 and output collisions, recover H.264 without re-encode, and describe AAC reconstruction as playback-review unless strict decode is clean. Never claim recovery of the missing EOF payload.
+- Files affected: `.assets/avidemux.ico`, `Video/Recover-IncompleteMp4.ps1`, `Video/Recover-IncompleteMp4.reg`, `tests/Test-RecoverIncompleteMp4Safety.ps1`, `Video/Incomplete-MP4-Recovery.md`, `README.md`, `docs/PowerShell-Tool-Guide.md`, `docs/Context-Menu-Verification.md`, `CHANGELOG.md`, `PROJECT_RULES.md`
+- Validation/tests run: PowerShell parser passed and the embedded C# engine compiled at runtime. The real 2.87 GB `1x.mp4` produced 19,428 strict-clean H.264 frames and 30,385 recovered AAC frames while preserving the source; its final MP4 SHA-256 exactly matched the independently tested Python prototype. The user reported the earlier equivalent `1x_recovered_av_test3.mp4` was already perfect. Focused safety tests cover healthy/invalid input rejection, source hash/timestamp preservation, collision safety, incompatible switches and the `.mp4` context-menu artifact. The initial per-user key passed readback and Shell enumeration but failed the real visible Explorer test. The corrected machine-wide key was elevated-imported, read back exactly through `HKLM` and merged `HKCR`, found by Shell enumeration, and the failed `HKCU` duplicate was verified absent. The user confirmed the corrected action is visible in the real Explorer menu; launcher acceptance remains required.
 
 ### 2026-08-24 - TS source deletion requires explicit verified opt-in
 

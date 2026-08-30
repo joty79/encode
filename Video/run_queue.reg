@@ -1,21 +1,4 @@
 Windows Registry Editor Version 5.00
 
-; ===============================
-; Run Encode Queue - FOLDER BACKGROUND
-; ===============================
-[HKEY_CLASSES_ROOT\Directory\Background\shell\RunEncodeQueue]
-@="Run Encode Queue"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
-
-[HKEY_CLASSES_ROOT\Directory\Background\shell\RunEncodeQueue\command]
-@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\run_queue.ps1\" \"%V\""
-
-; ===============================
-; Run Encode Queue - DESKTOP
-; ===============================
-[HKEY_CLASSES_ROOT\DesktopBackground\shell\RunEncodeQueue]
-@="Run Encode Queue"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\ffmpeg.ico"
-
-[HKEY_CLASSES_ROOT\DesktopBackground\shell\RunEncodeQueue\command]
-@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\run_queue.ps1\" \"%V\""
+; Legacy direct registration retired.
+; Run Video Queue is generated inside the Media Tools cascade.

@@ -11,15 +11,3 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CLASSES_ROOT\Directory\Background\shell\RunAudioQueue\command]
 @="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\run_audio_queue.ps1\" \"%V\""
-
-; ===============================
-; Run Audio Queue - On Folder
-; Right-click on a folder
-; ===============================
-
-[HKEY_CLASSES_ROOT\Directory\shell\RunAudioQueue]
-@="Run Audio Queue"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico"
-
-[HKEY_CLASSES_ROOT\Directory\shell\RunAudioQueue\command]
-@="wt.exe -p \"PowerShell\" pwsh -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\audio\\run_audio_queue.ps1\" \"%V\""

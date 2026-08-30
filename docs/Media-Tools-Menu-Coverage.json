@@ -1,0 +1,675 @@
+﻿{
+  "GeneratedAt": "2026-08-30T01:34:48.5511068Z",
+  "ManifestPath": "D:\\Users\\joty79\\scripts\\encode\\config\\MediaTools-Menu.json",
+  "OutputHive": "All",
+  "OutputRegPath": "D:\\Users\\joty79\\scripts\\encode\\Video\\Media-Tools.reg",
+  "RemovalRegPath": "D:\\Users\\joty79\\scripts\\encode\\Video\\Remove-Media-Tools.reg",
+  "TargetRoots": 34,
+  "GeneratedTargetRoots": 34,
+  "CoverageMappings": 125,
+  "MissingLegacyCoverage": [],
+  "ExtraCoverage": [
+    "extension|.aac|mediainfo",
+    "extension|.aac|audioencode",
+    "extension|.aac|addtoaudioqueue",
+    "extension|.ac3|mediainfo",
+    "extension|.ac3|audioencode",
+    "extension|.ac3|addtoaudioqueue",
+    "extension|.dts|mediainfo",
+    "extension|.dts|audioencode",
+    "extension|.dts|addtoaudioqueue",
+    "extension|.flac|mediainfo",
+    "extension|.flac|audioencode",
+    "extension|.flac|addtoaudioqueue",
+    "extension|.m4a|mediainfo",
+    "extension|.m4a|audioencode",
+    "extension|.m4a|addtoaudioqueue",
+    "extension|.mp3|mediainfo",
+    "extension|.mp3|audioencode",
+    "extension|.mp3|addtoaudioqueue",
+    "extension|.ogg|mediainfo",
+    "extension|.ogg|audioencode",
+    "extension|.ogg|addtoaudioqueue",
+    "extension|.opus|mediainfo",
+    "extension|.opus|audioencode",
+    "extension|.opus|addtoaudioqueue",
+    "extension|.wav|mediainfo",
+    "extension|.wav|audioencode",
+    "extension|.wav|addtoaudioqueue",
+    "extension|.wma|mediainfo",
+    "extension|.wma|audioencode",
+    "extension|.wma|addtoaudioqueue",
+    "extension|.avi|mediainfo",
+    "extension|.avi|encodenvidiah264",
+    "extension|.avi|audioencode",
+    "extension|.avi|addtoencodequeue",
+    "extension|.avi|addtoaudioqueue",
+    "extension|.flv|mediainfo",
+    "extension|.flv|encodenvidiah264",
+    "extension|.flv|audioencode",
+    "extension|.flv|addtoencodequeue",
+    "extension|.flv|addtoaudioqueue",
+    "extension|.m2ts|mediainfo",
+    "extension|.m2ts|encodenvidiah264",
+    "extension|.m2ts|audioencode",
+    "extension|.m2ts|addtoencodequeue",
+    "extension|.m2ts|addtoaudioqueue",
+    "extension|.mov|mediainfo",
+    "extension|.mov|encodenvidiah264",
+    "extension|.mov|audioencode",
+    "extension|.mov|addtoencodequeue",
+    "extension|.mov|addtoaudioqueue",
+    "extension|.mpeg|mediainfo",
+    "extension|.mpeg|encodenvidiah264",
+    "extension|.mpeg|audioencode",
+    "extension|.mpeg|addtoencodequeue",
+    "extension|.mpeg|addtoaudioqueue",
+    "extension|.mpg|mediainfo",
+    "extension|.mpg|encodenvidiah264",
+    "extension|.mpg|audioencode",
+    "extension|.mpg|addtoencodequeue",
+    "extension|.mpg|addtoaudioqueue",
+    "extension|.vob|mediainfo",
+    "extension|.vob|encodenvidiah264",
+    "extension|.vob|audioencode",
+    "extension|.vob|addtoencodequeue",
+    "extension|.vob|addtoaudioqueue",
+    "extension|.webm|mediainfo",
+    "extension|.webm|encodenvidiah264",
+    "extension|.webm|audioencode",
+    "extension|.webm|addtoencodequeue",
+    "extension|.webm|addtoaudioqueue",
+    "extension|.mp4|mediainfo",
+    "extension|.mp4|encodenvidiah264",
+    "extension|.mp4|mkv merge",
+    "extension|.mp4|recoverincompletemp4",
+    "extension|.mp4|audioencode",
+    "extension|.mp4|replace_audio_aac",
+    "extension|.mp4|addtoencodequeue",
+    "extension|.mp4|addtoaudioqueue",
+    "extension|.mkv|mediainfo",
+    "extension|.mkv|extractsubtitle",
+    "extension|.mkv|encodenvidiah264",
+    "extension|.mkv|remuxtomp4",
+    "extension|.mkv|audioencode",
+    "extension|.mkv|addtoencodequeue",
+    "extension|.mkv|addtoaudioqueue",
+    "extension|.ts|mediainfo",
+    "extension|.ts|encodenvidiah264",
+    "extension|.ts|analyzetstimestamps",
+    "extension|.ts|fixtstomp4noreencode",
+    "extension|.ts|audioencode",
+    "extension|.ts|addtoencodequeue",
+    "extension|.ts|addtoaudioqueue",
+    "extension|.wmv|mediainfo",
+    "extension|.wmv|encodenvidiah264",
+    "extension|.wmv|joinwmvsmart",
+    "extension|.wmv|audioencode",
+    "extension|.wmv|addtoencodequeue",
+    "extension|.wmv|addtoaudioqueue",
+    "extension|.avif|convertwebpsmart",
+    "extension|.heic|convertwebpsmart",
+    "extension|.heif|convertwebpsmart",
+    "extension|.bmp|converttoico",
+    "extension|.jpeg|converttoico",
+    "extension|.jpg|converttoico",
+    "extension|.png|converttoico",
+    "extension|.webp|convertwebpsmart",
+    "extension|.webp|converttoico",
+    "extension|.exe|extract icon",
+    "extension|.vtt|converttosrt",
+    "folder|directory|mediainfo",
+    "folder|directory|converttosrt",
+    "folder|directory|encodenvidiah264",
+    "folder|directory|analyzetstimestamps",
+    "folder|directory|fixtstomp4noreencode",
+    "folder|directory|convertwebpsmart",
+    "folder|directory|audioencode",
+    "folder|directory|movenoaudio",
+    "folder|directory|addtoencodequeue",
+    "folder|directory|addtoaudioqueue",
+    "folderbackground|directory background|movenoaudio",
+    "folderbackground|directory background|analyzetstimestamps",
+    "folderbackground|directory background|fixtstomp4noreencode",
+    "folderbackground|directory background|converttosrt",
+    "folderbackground|directory background|runencodequeue"
+  ],
+  "LegacyCommandMismatches": [],
+  "MaxVisibleChildrenPerLevel": 15,
+  "MaxObservedVisibleChildrenPerLevel": 6,
+  "Targets": [
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".aac",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.aac\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".ac3",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.ac3\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".dts",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.dts\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".flac",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.flac\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".m4a",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.m4a\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mp3",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mp3\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".ogg",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.ogg\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".opus",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.opus\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".wav",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.wav\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".wma",
+      "Profile": "audio",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.wma\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 3,
+      "ActionCount": 3,
+      "Actions": [
+        "inspect-file",
+        "convert-audio-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".avi",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.avi\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".flv",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.flv\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".m2ts",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.m2ts\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mov",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mov\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mpeg",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mpeg\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mpg",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mpg\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".vob",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.vob\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".webm",
+      "Profile": "video-common",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.webm\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 5,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mp4",
+      "Profile": "mp4",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mp4\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 8,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "merge-mp4-srt",
+        "recover-incomplete-mp4",
+        "audio-file",
+        "replace-audio-mp4",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".mkv",
+      "Profile": "mkv",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.mkv\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 6,
+      "ActionCount": 7,
+      "Actions": [
+        "inspect-file",
+        "extract-mkv-subtitle",
+        "encode-video-file",
+        "remux-mkv-mp4",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".ts",
+      "Profile": "ts",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.ts\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 7,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "analyze-ts-file",
+        "fix-ts-file",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".wmv",
+      "Profile": "wmv",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.wmv\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 5,
+      "ActionCount": 6,
+      "Actions": [
+        "inspect-file",
+        "encode-video-file",
+        "join-wmv",
+        "audio-file",
+        "add-video-file",
+        "add-audio-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".avif",
+      "Profile": "image-smart",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.avif\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "smart-image-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".heic",
+      "Profile": "image-smart",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.heic\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "smart-image-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".heif",
+      "Profile": "image-smart",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.heif\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "smart-image-file"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".bmp",
+      "Profile": "image-icon",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.bmp\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "convert-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".jpeg",
+      "Profile": "image-icon",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.jpeg\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "convert-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".jpg",
+      "Profile": "image-icon",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.jpg\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "convert-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".png",
+      "Profile": "image-icon",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.png\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "convert-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".webp",
+      "Profile": "webp",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.webp\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 2,
+      "ActionCount": 2,
+      "Actions": [
+        "smart-image-file",
+        "convert-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".exe",
+      "Profile": "exe",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.exe\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "extract-exe-icon"
+      ]
+    },
+    {
+      "Hive": "HKLM",
+      "TargetType": "Extension",
+      "Target": ".vtt",
+      "Profile": "vtt",
+      "RootPath": "HKEY_LOCAL_MACHINE\\Software\\Classes\\SystemFileAssociations\\.vtt\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 1,
+      "ActionCount": 1,
+      "Actions": [
+        "convert-vtt-srt"
+      ]
+    },
+    {
+      "Hive": "HKCU",
+      "TargetType": "Folder",
+      "Target": "Directory",
+      "Profile": "folder",
+      "RootPath": "HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 6,
+      "ActionCount": 10,
+      "Actions": [
+        "inspect-folder",
+        "convert-vtt-srt-folder",
+        "encode-video-folder",
+        "analyze-ts-folder-selected",
+        "fix-ts-folder-selected",
+        "smart-image-folder",
+        "audio-folder",
+        "check-audio-folder-selected",
+        "add-video-folder",
+        "add-audio-folder"
+      ]
+    },
+    {
+      "Hive": "HKCU",
+      "TargetType": "FolderBackground",
+      "Target": "Directory\\Background",
+      "Profile": "folder-background",
+      "RootPath": "HKEY_CURRENT_USER\\Software\\Classes\\Directory\\Background\\shell\\MediaTools",
+      "RootIcon": "root",
+      "RootChildren": 6,
+      "ActionCount": 6,
+      "Actions": [
+        "check-audio-folder-background",
+        "analyze-ts-folder-background",
+        "fix-ts-folder-background",
+        "convert-vtt-srt-background",
+        "run-video-queue",
+        "run-audio-queue"
+      ]
+    }
+  ]
+}

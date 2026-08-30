@@ -1,8 +1,4 @@
 Windows Registry Editor Version 5.00
 
-[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle]
-"MUIVerb"="Extract subtitle → SRT"
-"Icon"="d:\\Users\\joty79\\Documents\\Icons\\SubtitleEdit.ico"
-
-[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.mkv\shell\ExtractSubtitle\command]
-@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Extract-MKV-Subtitle.vbs\" \"%1\""
+; Legacy direct registration retired.
+; Extract Subtitle -> SRT is generated inside the Media Tools cascade.

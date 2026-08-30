@@ -1,40 +1,4 @@
 Windows Registry Editor Version 5.00
 
-; =========================
-; Convert image to ICO (silent)
-; =========================
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.png\shell\ConvertToICO]
-@="Convert to .ico"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\convert.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.png\shell\ConvertToICO\command]
-@="pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.jpg\shell\ConvertToICO]
-@="Convert to .ico"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\convert.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.jpg\shell\ConvertToICO\command]
-@="pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.jpeg\shell\ConvertToICO]
-@="Convert to .ico"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\convert.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.jpeg\shell\ConvertToICO\command]
-@="pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.bmp\shell\ConvertToICO]
-@="Convert to .ico"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\convert.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.bmp\shell\ConvertToICO\command]
-@="pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.webp\shell\ConvertToICO]
-@="Convert to .ico"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\convert.ico"
-
-[HKEY_CLASSES_ROOT\SystemFileAssociations\.webp\shell\ConvertToICO\command]
-@="pwsh.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\icons\\convert_to_ico.ps1\" \"%1\""
+; Legacy direct registration retired.
+; Convert to .ico is generated inside the Media Tools cascade.

@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "state": "draft-current-state-classification",
+  "principles": {
+    "removalGate": "Do not remove a current-direct menu until its organized replacement has exact Registry verification and user visual acceptance.",
+    "acceptanceOwner": "docs/Context-Menu-Verification.md",
+    "hiveMigration": "Replace ambiguous HKEY_CLASSES_ROOT source definitions with explicit HKLM or HKCU ownership before the final installer becomes canonical."
+  },
+  "artifacts": [
+    {
+      "sourceFile": "audio/add_to_audio_queue.reg",
+      "area": "audio",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "audio/audio_encode.reg",
+      "area": "audio",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "audio/Replace-Audio-MP4.reg",
+      "area": "audio",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "audio/run_audio_queue.reg",
+      "area": "audio",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 1
+    },
+    {
+      "sourceFile": "icons/convert_to_ico.reg",
+      "area": "icons",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "icons/Extract-Exe-Icon.reg",
+      "area": "icons",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "no_audio/Add-MoveNoAudio-Menu.reg",
+      "area": "audio-diagnostics",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "explicit-hkcu",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "subtitle/Convert to SRT.reg",
+      "area": "subtitles",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "explicit-hklm",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "subtitle/Extract-MKV-Subtitle.reg",
+      "area": "subtitles",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "explicit-hklm",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/add_to_queue.reg",
+      "area": "video-queue",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/convert_webp_smart.reg",
+      "area": "images",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/inspector/inspect.reg",
+      "area": "inspection",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/join-wmv-smart.reg",
+      "area": "video",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/Media-Tools.reg",
+      "area": "organized-menu",
+      "kind": "context-menu",
+      "lifecycle": "production-cascade",
+      "plannedDisposition": "production-cascade",
+      "hivePolicy": "explicit-mixed",
+      "expectedDefinitionCount": 34
+    },
+    {
+      "sourceFile": "Video/Merge-MP4-SRT.reg",
+      "area": "video",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/Recover-IncompleteMp4.reg",
+      "area": "video-recovery",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "explicit-hklm",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/RemuxToMP4.reg",
+      "area": "video",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/Repair-TsTimestampRemux.reg",
+      "area": "ts-tools",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "explicit-mixed",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/run_queue.reg",
+      "area": "video-queue",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/video_encode.reg",
+      "area": "video",
+      "kind": "context-menu",
+      "lifecycle": "current-direct",
+      "plannedDisposition": "replace-after-organized-menu-acceptance",
+      "hivePolicy": "ambiguous-hkcr",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/Explorer-MultiSelectLimit.reg",
+      "area": "explorer-support",
+      "kind": "registry-tweak",
+      "lifecycle": "supporting-current",
+      "plannedDisposition": "retain-separately-from-menu-manifest",
+      "hivePolicy": "explicit-hkcu",
+      "expectedDefinitionCount": 0
+    },
+    {
+      "sourceFile": "Video/Remove-Media-Tools.reg",
+      "area": "organized-menu",
+      "kind": "removal-artifact",
+      "lifecycle": "production-cleanup",
+      "plannedDisposition": "retain-with-menu-for-clean-uninstallation",
+      "hivePolicy": "explicit-mixed",
+      "expectedDefinitionCount": 0
+    }
+  ]
+}

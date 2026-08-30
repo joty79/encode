@@ -1,8 +1,4 @@
 Windows Registry Editor Version 5.00
 
-[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.vtt\shell\ConvertToSRT]
-@="Convert to SRT"
-"Icon"="D:\\Users\\joty79\\Documents\\Icons\\SubtitleEdit.ico"
-
-[HKEY_LOCAL_MACHINE\Software\Classes\SystemFileAssociations\.vtt\shell\ConvertToSRT\command]
-@="wscript.exe \"D:\\Users\\joty79\\scripts\\encode\\subtitle\\Convert-to-SRT.vbs\" \"%1\""
+; Legacy direct registration retired.
+; Convert VTT to SRT is generated inside the Media Tools cascade.
