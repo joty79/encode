@@ -88,7 +88,7 @@ manual visual decision. The canonical checklist is in
 
 | Script | What it is for | Status and previous-goal change |
 | --- | --- | --- |
-| `Video\video_encode.ps1` | Main H.264 NVENC encoder. Reads media metadata, detects interlacing with FFmpeg `idet`, uses AviSynth+/QTGMC for TFF/BFF sources, supports resize/QP/GOP settings, and validates the output. | **Installed / verified. Unchanged in the pasted goal.** Earlier recovery hardened ffprobe/FFmpeg failures and proved the real `3.mpg` QTGMC path. Visual acceptance exists for that encode workflow. |
+| `Video\video_encode.ps1` | Main H.264 encoder. Reads media metadata, detects interlacing with FFmpeg `idet`, uses AviSynth+/QTGMC for TFF/BFF sources, supports resize/quality/GOP/encoder settings, and validates the output. | **Installed / verified.** Auto performs a real one-frame NVENC probe, keeps the established NVENC QP 22/P5 path when functional, and falls back to benchmarked x264 CRF 19/fast on systems without NVENC. The focused contract passes in PowerShell 7 and 5.1 and a real progressive x264 H.264/AAC smoke output passed full decode. |
 | `Video\add_to_queue.ps1` | Silently adds a video file/folder to `Video\queue\queue.txt`, avoiding exact duplicates and file/folder overlap. | **Installed / verified. Unchanged in the pasted goal.** Still contains checkout-specific paths that belong in the future installer. |
 | `Video\run_queue.ps1` | Interactive video queue manager and batch launcher for `video_encode.ps1`; retains failed entries and clears only successful work. | **Installed / verified. Unchanged in the pasted goal.** Failure retention was hardened earlier. |
 | `Video\inspector\inspect.ps1` | Read-only recursive/single-file ffprobe inspector for resolution, bitrate, FPS mode, scan type, geometry, audio and policy output. | **Installed / verified. Unchanged in the pasted goal.** Earlier audit added `.ts`, reliable nonzero failures and mixed-folder continuation. |
@@ -165,7 +165,7 @@ Windows installation.
 | `tests\Test-ConvertSmartImageSafety.ps1` | Static/animated conversion, timing, validation, collisions, mixed folders and invalid inputs. | No; immediately preceding image-converter audit. |
 | `tests\Test-DetectBadCutsReal.ps1` | Real aligned/misaligned/invalid cuts, healthy full decode and deliberately corrupt H.264 decode. | **New.** |
 | `tests\Test-MergeMp4SrtSafety.ps1` | MP4+SRT→MKV tracks, source preservation, collision, missing SRT and invalid media. | No; earlier test. |
-| `tests\Test-P1VideoEncodeQueueSafetyContract.ps1` | Encoder parser/metadata/child-exit contracts and video queue failed-item retention. | No; earlier test. |
+| `tests\Test-P1VideoEncodeQueueSafetyContract.ps1` | Encoder selection/arguments/NVENC-fallback, parser/metadata/child-exit contracts and video queue failed-item retention. | **Expanded** for automatic NVENC/x264 selection and portable batch settings. |
 | `tests\Test-RemuxToMP4Safety.ps1` | AAC copy, PCM→AAC, source/collision safety and invalid/partial cleanup. | No; earlier test. |
 | `tests\Test-RepairDamagedVideoPrototype.ps1` | Synthetic AVCC corruption detection, exact sub-second ranges, real patch path, collision/failure cleanup, video-only support and strict codec scope. | **New. Does not test visible artifacts.** |
 | `tests\Test-RepairMp4DisguisedTsSafety.ps1` | Real-MP4 no-op, disguised-TS repair, audio/video validation, custom output, collisions and invalid inputs. | **New.** |

@@ -10,7 +10,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 
 | Workflow | Code and integration | Current evidence |
 | --- | --- | --- |
-| Direct NVIDIA H.264 encode | `video_encode.ps1`, `video_encode.reg` | Real BFF MPEG-2 through QTGMC/NVENC; progressive H.264/AAC output; full decode; user visual acceptance |
+| Direct H.264 encode | `video_encode.ps1`, `video_encode.reg`, `Avidemux-Profiles\` | Auto-probes functional NVENC and otherwise uses x264 CRF 19/fast; real BFF MPEG-2 through QTGMC/NVENC and synthetic progressive x264 H.264/AAC outputs passed full decode; reusable Avidemux x264/NVENC profiles also passed real encodes |
 | Add to video queue | `add_to_queue.ps1`, `silent_runner.vbs`, `add_to_queue.reg` | Real silent `wscript` launch queued a temporary sample |
 | Run video queue | `run_queue.ps1`, `run_queue.reg` | Successful QTGMC batch cleared the entry; invalid media returned nonzero and remained queued |
 | Media metadata Inspector | `inspector\inspect.ps1`, `inspector\inspect.reg`, `inspector\lib\Metrics.ps1`, `Policy.ps1`, `render.ps1` | Valid MPG and TS rendering; invalid input returns nonzero; mixed folder continues after failure; `.ts` menu added |
@@ -41,6 +41,7 @@ The following legacy Registry groups were manually imported and runtime-verified
 | --- | --- |
 | `lib\TsSourceCleanup.ps1` | Shared source-deletion guard used by TS timestamp remux |
 | `video_encode_changelog.md` | Historical video encoder notes |
+| `Avidemux-Profiles\` | Reusable Avidemux 2.8.1 x264 CRF 19/fast and NVENC QP 22/P5-equivalent profiles |
 | `CHANGELOG.md` | Historical queue notes |
 | `Explorer-MultiSelectLimit.reg` | Per-user Explorer multi-selection limit (`MultipleInvokePromptMinimum=100`); applies to Windows 11 but is not a media command |
 | `icons.code-workspace` | Editor workspace artifact; not an installable tool |

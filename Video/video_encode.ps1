@@ -6,22 +6,110 @@ param (
 # ===============================
 # DEFAULTS
 # ===============================
-$defaultQP = 22
+$defaultNvencQP = 22
+$defaultX264CRF = 19
 $defaultGOPSeconds = 1
 
-$QP = $defaultQP
+$nvencQP = $defaultNvencQP
+$x264CRF = $defaultX264CRF
+$encoderPreference = "auto"
 $resizeWidth = $null
 $gopSeconds = $defaultGOPSeconds
 
 # ===============================
 # BATCH SETTINGS FILE
 # ===============================
-$batchSettingsFile = "D:\Users\joty79\scripts\encode\Video\queue\batch_settings.json"
+$batchSettingsFile = Join-Path $PSScriptRoot "queue\batch_settings.json"
 
 
 # ===============================
 # FUNCTIONS
 # ===============================
+
+function Test-H264NvencAvailable {
+    $ffmpegCommand = Get-Command ffmpeg -ErrorAction SilentlyContinue
+    if (-not $ffmpegCommand) {
+        return $false
+    }
+
+    $probeArgs = @(
+        "-hide_banner",
+        "-loglevel", "error",
+        "-f", "lavfi",
+        "-i", "color=c=black:s=256x256:r=1:d=0.04",
+        "-frames:v", "1",
+        "-an",
+        "-c:v", "h264_nvenc",
+        "-f", "null",
+        "NUL"
+    )
+
+    & ffmpeg @probeArgs 2>&1 | Out-Null
+    $ffmpegExitCode = $LASTEXITCODE
+    return ($ffmpegExitCode -eq 0)
+}
+
+function Resolve-VideoEncoder {
+    param(
+        [Parameter(Mandatory)][ValidateSet("auto", "nvenc", "x264")][string]$Preference,
+        [Parameter(Mandatory)][bool]$NvencAvailable
+    )
+
+    if ($Preference -eq "x264") {
+        return "x264"
+    }
+
+    if ($NvencAvailable) {
+        return "nvenc"
+    }
+
+    return "x264"
+}
+
+function Get-VideoEncoderArguments {
+    param(
+        [Parameter(Mandatory)][ValidateSet("nvenc", "x264")][string]$Encoder,
+        [Parameter(Mandatory)][ValidateRange(0, 51)][int]$NvencQP,
+        [Parameter(Mandatory)][ValidateRange(0, 51)][int]$X264CRF,
+        [Parameter(Mandatory)][ValidateRange(1, 100000)][int]$MaxMbps,
+        [Parameter(Mandatory)][ValidateRange(1, 100000)][int]$GopFrames
+    )
+
+    if ($Encoder -eq "nvenc") {
+        return @(
+            "-c:v", "h264_nvenc", "-rc", "constqp", "-qp", "$NvencQP",
+            "-maxrate", "$($MaxMbps)M", "-bufsize", "$($MaxMbps * 2)M",
+            "-preset", "p5", "-profile:v", "high", "-pix_fmt", "yuv420p",
+            "-g", "$GopFrames", "-bf", "0"
+        )
+    }
+
+    return @(
+        "-c:v", "libx264", "-crf", "$X264CRF",
+        "-preset", "fast", "-profile:v", "high", "-pix_fmt", "yuv420p",
+        "-g", "$GopFrames", "-bf", "3"
+    )
+}
+
+function Get-ValidatedIntegerSetting {
+    param(
+        [AllowNull()]$Value,
+        [Parameter(Mandatory)][int]$Minimum,
+        [Parameter(Mandatory)][int]$Maximum,
+        [Parameter(Mandatory)][int]$DefaultValue,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    $parsedValue = 0
+    if ([int]::TryParse([string]$Value, [ref]$parsedValue) -and
+        $parsedValue -ge $Minimum -and
+        $parsedValue -le $Maximum) {
+        return $parsedValue
+    }
+
+    Write-Host "Invalid saved $Name value. Using default $DefaultValue." -ForegroundColor Yellow
+    return $DefaultValue
+}
 
 function Get-InterlaceInfo {
     param([string]$InputPath)
@@ -404,6 +492,45 @@ function Invoke-FFmpegWithProgress {
 
 # === UI helpers + Video info + Resize helpers (END) ===
 
+$nvencAvailable = Test-H264NvencAvailable
+
+function Get-ActiveEncoder {
+    return Resolve-VideoEncoder -Preference $encoderPreference -NvencAvailable $nvencAvailable
+}
+
+function Get-EncoderName {
+    $activeEncoder = Get-ActiveEncoder
+    if ($activeEncoder -eq "nvenc") {
+        return "NVIDIA H.264 (NVENC)"
+    }
+    return "H.264 (x264 software)"
+}
+
+function Get-EncoderSelectionDisplay {
+    $activeName = Get-EncoderName
+    if ($encoderPreference -eq "auto") {
+        return "Auto -> $activeName"
+    }
+    if ($encoderPreference -eq "nvenc" -and -not $nvencAvailable) {
+        return "NVIDIA requested -> x264 fallback (NVENC unavailable)"
+    }
+    return $activeName
+}
+
+function Get-QualityLabel {
+    if ((Get-ActiveEncoder) -eq "nvenc") {
+        return "NVENC QP"
+    }
+    return "x264 CRF"
+}
+
+function Get-QualityValue {
+    if ((Get-ActiveEncoder) -eq "nvenc") {
+        return $nvencQP
+    }
+    return $x264CRF
+}
+
 # ===============================
 # FILE COLLECTION
 # ===============================
@@ -486,7 +613,8 @@ function Print-IntroScreen {
     Write-Host ""
     Write-Host "Default encoding settings:" -ForegroundColor Cyan
     Write-Host "--------------------------"
-    Write-LabelValue "QP: " "$defaultQP"
+    Write-LabelValue "Encoder: " "$(Get-EncoderSelectionDisplay)"
+    Write-LabelValue "$(Get-QualityLabel): " "$(Get-QualityValue)"
     Write-LabelValue "Resize: " "Keep original resolution"
     Write-LabelValue "Keyframe (GOP): " "$defaultGOPSeconds second (approx)"
     Write-Host ""
@@ -500,6 +628,52 @@ function Print-IntroScreen {
 
 }
 
+function Show-EncoderMenu {
+    while ($true) {
+        Write-Host ""
+        Write-Host "--- Video encoder ---" -ForegroundColor Cyan
+        Write-Host "--------------------------"
+        Write-Host "1) Auto (NVENC when available, otherwise x264)"
+        Write-Host "2) NVIDIA H.264 (NVENC)" -NoNewline
+        if (-not $nvencAvailable) {
+            Write-Host " - unavailable" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host ""
+        }
+        Write-Host "3) H.264 (x264 software)"
+        Write-Host ""
+        Write-Host "Current: " -NoNewline -ForegroundColor DarkGray
+        Write-Host "$(Get-EncoderSelectionDisplay)" -ForegroundColor Green
+        Write-Host "Press 1/2/3 to choose, or ESC/- to go back." -ForegroundColor DarkGray
+
+        $key = [Console]::ReadKey($true)
+        if ($key.Key -eq [ConsoleKey]::Escape -or $key.Key -eq [ConsoleKey]::Subtract) {
+            return
+        }
+
+        switch ($key.KeyChar) {
+            '1' {
+                $script:encoderPreference = "auto"
+                return
+            }
+            '2' {
+                if (-not $nvencAvailable) {
+                    Write-Host "NVENC is not functional on this system. Auto/x264 will be used." -ForegroundColor Yellow
+                    Start-Sleep -Milliseconds 900
+                    continue
+                }
+                $script:encoderPreference = "nvenc"
+                return
+            }
+            '3' {
+                $script:encoderPreference = "x264"
+                return
+            }
+        }
+    }
+}
+
 function Show-SettingsMenu {
     while ($true) {
         Write-Host ""
@@ -507,8 +681,8 @@ function Show-SettingsMenu {
         Write-Host "--------------------------"
 
         Write-Host "1) " -NoNewline
-        Write-Host "QP: " -NoNewline
-        Write-Host "$QP" -ForegroundColor Green
+        Write-Host "$(Get-QualityLabel): " -NoNewline
+        Write-Host "$(Get-QualityValue)" -ForegroundColor Green
 
         Write-Host "2) " -NoNewline
         Write-Host "Resize: " -NoNewline
@@ -518,9 +692,13 @@ function Show-SettingsMenu {
         Write-Host "GOP: " -NoNewline
         Write-Host "$gopSeconds second(s)" -ForegroundColor Green
 
+        Write-Host "4) " -NoNewline
+        Write-Host "Encoder: " -NoNewline
+        Write-Host "$(Get-EncoderSelectionDisplay)" -ForegroundColor Green
+
         Write-Host ""
         Write-Host "Press " -ForegroundColor DarkGray -NoNewline
-        Write-Host "1/2/3" -NoNewline
+        Write-Host "1/2/3/4" -NoNewline
         Write-Host " to edit. " -ForegroundColor DarkGray -NoNewline
         Write-Host "ENTER" -ForegroundColor Green -NoNewline
         Write-Host " to continue. " -ForegroundColor DarkGray
@@ -539,13 +717,14 @@ function Show-SettingsMenu {
         switch ($k.KeyChar) {
             '1' {
                 while ($true) {
+                    $qualityLabel = Get-QualityLabel
                     Write-Host ""
-                    Write-Host "--- QP ---" -ForegroundColor Cyan
+                    Write-Host "--- $qualityLabel ---" -ForegroundColor Cyan
                     Write-Host "--------------------------"                                     
-                    Write-LabelValue "Current QP: " "$QP"
+                    Write-LabelValue "Current ${qualityLabel}: " "$(Get-QualityValue)"
                     Write-Host ""
                     Write-Host "Type new " -ForegroundColor DarkGray -NoNewline
-                    Write-Host "QP" -NoNewline
+                    Write-Host "$qualityLabel" -NoNewline
                     Write-Host " and press " -ForegroundColor DarkGray -NoNewline
                     Write-Host "ENTER " -ForegroundColor Green -NoNewline
                     Write-Host "Or " -ForegroundColor DarkGray -NoNewline
@@ -553,14 +732,19 @@ function Show-SettingsMenu {
                     Write-Host " to go back." -ForegroundColor DarkGray
 
 
-                    Write-Host "New QP value: " -NoNewline
+                    Write-Host "New $qualityLabel value: " -NoNewline
                     $line = Read-LineOrEsc
 
 
                     if ($null -eq $line) { break }
 
-                    if ($line -match '^\d+$') {
-                        $script:QP = [int]$line
+                    if ($line -match '^\d+$' -and [int]$line -le 51) {
+                        if ((Get-ActiveEncoder) -eq "nvenc") {
+                            $script:nvencQP = [int]$line
+                        }
+                        else {
+                            $script:x264CRF = [int]$line
+                        }
                         break
                     }
                     else {
@@ -606,6 +790,9 @@ function Show-SettingsMenu {
                     }
                 }
             }
+            '4' {
+                Show-EncoderMenu
+            }
         }
     }
 }
@@ -630,9 +817,12 @@ if (-not $Batch) {
 
     # SAVE SETTINGS FOR BATCH
     $settings = @{
-        QP          = $QP
-        ResizeWidth = $resizeWidth
-        GOP         = $gopSeconds
+        EncoderPreference = $encoderPreference
+        NvencQP           = $nvencQP
+        X264CRF           = $x264CRF
+        QP                = $nvencQP
+        ResizeWidth       = $resizeWidth
+        GOP               = $gopSeconds
     }
     $settings | ConvertTo-Json | Set-Content $batchSettingsFile -Encoding UTF8
 }
@@ -640,10 +830,32 @@ else {
     # LOAD SETTINGS FOR BATCH
     if (Test-Path $batchSettingsFile) {
         $s = Get-Content $batchSettingsFile | ConvertFrom-Json
-        $QP = $s.QP
+
+        if ($s.PSObject.Properties.Name -contains "EncoderPreference" -and
+            @("auto", "nvenc", "x264") -contains $s.EncoderPreference) {
+            $encoderPreference = [string]$s.EncoderPreference
+        }
+        if ($s.PSObject.Properties.Name -contains "NvencQP") {
+            $nvencQP = Get-ValidatedIntegerSetting -Value $s.NvencQP -Minimum 0 -Maximum 51 `
+                -DefaultValue $defaultNvencQP -Name "NVENC QP"
+        }
+        elseif ($s.PSObject.Properties.Name -contains "QP") {
+            $nvencQP = Get-ValidatedIntegerSetting -Value $s.QP -Minimum 0 -Maximum 51 `
+                -DefaultValue $defaultNvencQP -Name "NVENC QP"
+        }
+        if ($s.PSObject.Properties.Name -contains "X264CRF") {
+            $x264CRF = Get-ValidatedIntegerSetting -Value $s.X264CRF -Minimum 0 -Maximum 51 `
+                -DefaultValue $defaultX264CRF -Name "x264 CRF"
+        }
         $resizeWidth = $s.ResizeWidth
-        $gopSeconds = $s.GOP
+        $gopSeconds = Get-ValidatedIntegerSetting -Value $s.GOP -Minimum 1 -Maximum 3600 `
+            -DefaultValue $defaultGOPSeconds -Name "GOP"
     }
+}
+
+$activeEncoder = Get-ActiveEncoder
+if ($encoderPreference -eq "nvenc" -and -not $nvencAvailable) {
+    Write-Host "NVENC was requested but is unavailable. Falling back to x264 CRF $x264CRF." -ForegroundColor Yellow
 }
 
 
@@ -681,7 +893,12 @@ foreach ($f in $files) {
             $vi.Width, $vi.Height, $vi.FPS, $interlaceInfo.Interlaced, $avgMbps
     ) -ForegroundColor DarkGray -NoNewline
 
-    Write-Host " | Cap: $mbps Mbps | QP: $QP" -ForegroundColor DarkGray
+    if ($activeEncoder -eq "nvenc") {
+        Write-Host " | Encoder: NVENC | Cap: $mbps Mbps | QP: $nvencQP" -ForegroundColor DarkGray
+    }
+    else {
+        Write-Host " | Encoder: x264 | Preset: fast | CRF: $x264CRF" -ForegroundColor DarkGray
+    }
 
     # === [NEW] AUDIO SYNC DISPLAY IN LOOP ===
     $aCheck = Get-AudioSyncAnalysis -InputPath $input
@@ -695,6 +912,12 @@ foreach ($f in $files) {
 
     # GOP (seconds -> frames, approximate)
     $gopFrames = [math]::Max(1, [math]::Round($gopSeconds * $vi.FPS))
+    $videoEncoderArgs = Get-VideoEncoderArguments `
+        -Encoder $activeEncoder `
+        -NvencQP $nvencQP `
+        -X264CRF $x264CRF `
+        -MaxMbps $mbps `
+        -GopFrames $gopFrames
 
     # ===============================
     # VIDEO FILTERS (resize / SAR fix)
@@ -797,11 +1020,7 @@ foreach ($f in $files) {
             "-map", "0:v:0",
             "-map", "1:a:0?",
             "-avoid_negative_ts", "make_zero"
-        ) + $vfArgs + @(
-            "-c:v", "h264_nvenc", "-rc", "constqp", "-qp", $QP,
-            "-maxrate", "$($mbps)M", "-bufsize", "$($mbps*2)M",
-            "-preset", "p5", "-profile:v", "high", "-pix_fmt", "yuv420p",
-            "-g", $gopFrames, "-bf", "0",
+        ) + $vfArgs + $videoEncoderArgs + @(
             "-c:a", "aac", "-b:a", "160k",
             "-shortest",
             "$output"
@@ -821,11 +1040,7 @@ foreach ($f in $files) {
             "-map", "0:v:0",
             "-map", "0:a:0?",
             "-avoid_negative_ts", "make_zero"
-        ) + $vfArgs + @(
-            "-c:v", "h264_nvenc", "-rc", "constqp", "-qp", $QP,
-            "-maxrate", "$($mbps)M", "-bufsize", "$($mbps*2)M",
-            "-preset", "p5", "-profile:v", "high", "-pix_fmt", "yuv420p",
-            "-g", $gopFrames, "-bf", "0",
+        ) + $vfArgs + $videoEncoderArgs + @(
             "-c:a", "aac", "-b:a", "160k",
             "$output"
         )

@@ -2,6 +2,11 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-09-01
+
+- Added x264 as a first-class choice to `Video\video_encode.ps1`. Auto now proves NVENC with an actual one-frame encode and falls back to x264 CRF 19/fast when NVIDIA encoding is unavailable, while preserving the existing NVENC QP 22/P5 behavior. Encoder choice and separate quality values persist in portable per-script batch settings with validation. The focused contract passes under PowerShell 7 and 5.1, and a real x264 H.264/AAC smoke output passed strict full decode.
+- Added and installed reusable Avidemux 2.8.1 profiles for x264 CRF 19/fast and NVENC QP 22/P5-equivalent. Both performed real H.264 High + AAC MP4 encodes which passed strict full decode; Avidemux confirmed the x264 profile loaded with CRF 19, GOP 25 and 3 B-frames.
+
 ## 2026-08-29
 
 - Replaced the hand-maintained four-target organized-menu prototype with a declarative preview manifest and generator. The generated explicit HKLM/HKCU cascade covers all 104 legacy target/verb mappings across 35 file/folder/background roots with zero omissions, extras or launcher-command mismatches, keeps `Queues` last, remains below the 15-child budget, and deletes/rebuilds only its own preview roots. The elevated import completed and the read-only audit found 139 source roots and 139 live roots with zero missing, unexpected, broken or exact-tree mismatches. Current direct verbs remain installed until real Explorer acceptance.

@@ -66,6 +66,64 @@ $invokeExpressionCommands = @($videoScript.Ast.FindAll({
         }, $true))
 Assert-Contract -Condition ($invokeExpressionCommands.Count -eq 0) -Message 'video_encode.ps1 must not use Invoke-Expression.'
 
+$encoderResolverFunction = Get-FunctionDefinition -Ast $videoScript.Ast -Name 'Resolve-VideoEncoder'
+$encoderResolverHarness = [scriptblock]::Create($encoderResolverFunction.Extent.Text + @'
+
+[pscustomobject]@{
+    AutoWithNvenc       = Resolve-VideoEncoder -Preference auto -NvencAvailable $true
+    AutoWithoutNvenc    = Resolve-VideoEncoder -Preference auto -NvencAvailable $false
+    ExplicitX264        = Resolve-VideoEncoder -Preference x264 -NvencAvailable $true
+    UnavailableExplicit = Resolve-VideoEncoder -Preference nvenc -NvencAvailable $false
+}
+'@)
+$encoderResolution = & $encoderResolverHarness
+Assert-Contract -Condition ($encoderResolution.AutoWithNvenc -ceq 'nvenc') -Message 'Auto must prefer a working NVENC encoder.'
+Assert-Contract -Condition ($encoderResolution.AutoWithoutNvenc -ceq 'x264') -Message 'Auto must fall back to x264 when NVENC is unavailable.'
+Assert-Contract -Condition ($encoderResolution.ExplicitX264 -ceq 'x264') -Message 'Explicit x264 selection must override available NVENC.'
+Assert-Contract -Condition ($encoderResolution.UnavailableExplicit -ceq 'x264') -Message 'Unavailable explicit NVENC must fail safe to x264.'
+
+$encoderArgumentsFunction = Get-FunctionDefinition -Ast $videoScript.Ast -Name 'Get-VideoEncoderArguments'
+$encoderArgumentsHarness = [scriptblock]::Create($encoderArgumentsFunction.Extent.Text + @'
+
+[pscustomobject]@{
+    Nvenc = @(Get-VideoEncoderArguments -Encoder nvenc -NvencQP 22 -X264CRF 19 -MaxMbps 12 -GopFrames 25)
+    X264  = @(Get-VideoEncoderArguments -Encoder x264 -NvencQP 22 -X264CRF 19 -MaxMbps 12 -GopFrames 25)
+}
+'@)
+$encoderArguments = & $encoderArgumentsHarness
+$nvencArgumentLine = $encoderArguments.Nvenc -join ' '
+$x264ArgumentLine = $encoderArguments.X264 -join ' '
+Assert-Contract -Condition ($nvencArgumentLine -match '-c:v h264_nvenc.*-rc constqp.*-qp 22.*-preset p5.*-g 25.*-bf 0') -Message 'NVENC must retain the established QP 22 / P5 / B0 baseline.'
+Assert-Contract -Condition ($x264ArgumentLine -match '-c:v libx264.*-crf 19.*-preset fast.*-profile:v high.*-g 25.*-bf 3') -Message 'x264 must use the benchmarked CRF 19 / fast / high / B3 profile.'
+Assert-Contract -Condition ($x264ArgumentLine -notmatch 'nvenc|maxrate|bufsize') -Message 'The x264 path must not inherit NVENC-only rate-control options.'
+
+$nvencProbeFunction = Get-FunctionDefinition -Ast $videoScript.Ast -Name 'Test-H264NvencAvailable'
+$nvencProbeHarnessText = @'
+param([int]$SimulatedExitCode)
+
+function ffmpeg {
+    $global:P1CapturedNvencProbeArguments = @($MyInvocation.UnboundArguments)
+    $global:LASTEXITCODE = $SimulatedExitCode
+}
+'@ + [Environment]::NewLine + $nvencProbeFunction.Extent.Text + @'
+
+[pscustomobject]@{
+    Available = Test-H264NvencAvailable
+    Captured  = @($global:P1CapturedNvencProbeArguments)
+}
+'@
+$nvencProbeHarness = [scriptblock]::Create($nvencProbeHarnessText)
+$successfulNvencProbe = & $nvencProbeHarness 0
+$failedNvencProbe = & $nvencProbeHarness 31
+Assert-Contract -Condition $successfulNvencProbe.Available -Message 'A successful real NVENC probe must mark NVENC available.'
+Assert-Contract -Condition (-not $failedNvencProbe.Available) -Message 'A failed real NVENC probe must force the x264 fallback.'
+Assert-Contract -Condition (($successfulNvencProbe.Captured -join ' ') -match '-c:v h264_nvenc') -Message 'NVENC detection must attempt an actual h264_nvenc frame encode.'
+Assert-Contract -Condition (($successfulNvencProbe.Captured -join ' ') -match 's=256x256') -Message 'The NVENC probe frame must stay above the encoder minimum dimensions.'
+
+Assert-Contract -Condition (
+    $videoScript.Source -match '\$batchSettingsFile\s*=\s*Join-Path\s+\$PSScriptRoot\s+"queue\\batch_settings\.json"'
+) -Message 'Batch encoder settings must be portable with the script instead of tied to one machine path.'
+
 $audioFunction = Get-FunctionDefinition -Ast $videoScript.Ast -Name 'Get-AudioSyncAnalysis'
 $unsafeInputPath = 'C:\media\clip & whoami $(not-run).mp4'
 $audioHarnessText = @'
