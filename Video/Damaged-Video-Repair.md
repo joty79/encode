@@ -4,6 +4,147 @@
 
 Σκοπός του δεν είναι να ισχυριστεί ότι λύσαμε όλα τα corrupted video cases. Σκοπός του είναι να σωθεί καθαρά η μέθοδος που δούλεψε, ώστε να την ξαναχρησιμοποιήσουμε και να τη βελτιώσουμε όταν εμφανιστούν άλλα damaged videos.
 
+## Πραγματικό repair — 2026-09-03, `test fix\1.mp4`
+
+**Το packet repair είναι μερική ανάκτηση. Ο χρήστης επιβεβαίωσε ότι παραμένουν
+freezes, προβληματικό seeking και μεταβαλλόμενο desync.** Το clean decode
+παρακάτω δεν αποτελεί επιβεβαίωση ομαλής αναπαραγωγής.
+
+Το νέο sample `D:\Users\joty79\Desktop\test fix\1.mp4` επισκευάστηκε σε
+ξεχωριστό `1_smart_repaired.mp4`. Το αρχικό διατηρήθηκε byte-for-byte.
+Πρόκειται για διαφορετικό sample από παλιότερες αναφορές σε αρχεία με όνομα
+`1.mp4` ή `3.mp4`.
+
+| Έλεγχος | Αποτέλεσμα |
+| --- | --- |
+| Source | 1,674,885,236 bytes, H.264 Main 1280×720, AAC stereo 48 kHz, διάρκεια 01:22:05.361678 |
+| Βλάβη video | 15,419 invalid AVCC packets· 15,418 είναι εξ ολοκλήρου zero-filled |
+| Βλάβη audio | 23,707 εξ ολοκλήρου zero-filled AAC packets μέσα στην ίδια περιοχή |
+| Conservative detector range | 01:09:17.445789–01:17:54.195267 |
+| Πραγματική αφαίρεση | 01:09:17.429122–01:17:54.195267, συνολικά 516.766145 s· το επιπλέον 0.016667 s είναι το μικρότερο από ένα frame τμήμα πριν από το detector range |
+| Output | 1,475,248,570 bytes, διάρκεια 01:13:28.595533 |
+| Rendering | Δύο stream-copy τμήματα, χωρίς video/audio re-encode σε αυτό το sample |
+| Full decode | Ολόκληρο το video και audio πέρασαν, exit `0`, χωρίς error output |
+| Αρχικός packet-only έλεγχος | Clean, exit `0`, 0.78 s. Με τον νέο έλεγχο timeline: exit `3`, 247 video gaps |
+| Διατήρηση περιεχομένου | Ανεξάρτητη σύγκριση όλων των 114,184 retained video VCL payloads και 177,647 AAC payloads: ίδια με τα αντίστοιχα source packets |
+| Χρονισμός | Αυστηρά αυξανόμενα DTS· σταθερό offset ανά retained τμήμα, με συμφωνία audio/video εντός 50 μs |
+| Source SHA-256 πριν/μετά | `07BEA36F46884749148C73AC4FC6B263324D8498115FF3FAE42E31FF3265E98D` |
+| Output SHA-256 | `8991B4F735EB9F5AF63EA7E5B8EA176A6CB79DEC1E66541C7956E4303FFC9FB1` |
+
+Εντολή του τελικού run, πάνω στο επαληθευμένο αντίγραφο εργασίας:
+
+```powershell
+pwsh -NoProfile -File '.\Video\Repair-DamagedVideo.ps1' `
+  -Path 'D:\Users\joty79\Desktop\test fix\repair-review-20260903\current-input.mp4' `
+  -OutputPath 'D:\Users\joty79\Desktop\test fix\1_smart_repaired.mp4' -KeepTemp
+```
+
+Το τελικό run ολοκληρώθηκε σε 35.81 s μαζί με full decode. Ο detector μετά
+την αλλαγή αναζήτησης keyframe χρειάστηκε 5.90 s σε ξεχωριστό run. Το αρχικό
+αργό detection διακόπηκε χωρίς αποτέλεσμα· δεν υπάρχει ολοκληρωμένος χρόνος
+baseline για ισχυρισμό συγκεκριμένου speedup factor.
+
+Διορθώσεις στο reusable script:
+
+- Binary search πάνω σε ταξινομημένα keyframe timestamps, αντί για επαναλαμβανόμενο
+  pipeline search για κάθε damaged packet.
+- Ρητή εμφάνιση της προγραμματισμένης αφαίρεσης και ακρίβεια χρόνου έξι δεκαδικών.
+- Απόρριψη audio preroll με `-copypriorss:a 0`. Το πρώτο repair απέτυχε σωστά
+  στο full decode: είχαν αντιγραφεί 17 zero-filled AAC packets πριν από το
+  clean video keyframe του δεύτερου τμήματος.
+- Presentation-time όριο στα copied video packets μέσω `noise` BSF με μόνο
+  `drop` expression, και συμβατό B-frame reordering στα encoded patches.
+  Το νέο synthetic B-frame case αποκάλυψε overlapping timestamps που πλέον
+  δεν εμφανίζονται σε αυτό το regression.
+- Όταν το AAC stream υπερβαίνει το video end κατά περισσότερο από δύο AAC
+  frames, το concat duration περιορίζεται στο video end. Στο πραγματικό
+  sample το τελευταίο AAC packet του πρώτου κομματιού είχε duration 1.621333 s
+  λόγω source gap και αλλιώς πρόσθετε ανεπιθύμητο χρόνο στην ένωση.
+  Ο χειρισμός βασίζεται στο [FFmpeg concat duration directive](https://ffmpeg.org/ffmpeg-formats.html#concat).
+
+Τα 40 assertions του `Test-RepairDamagedVideoPrototype.ps1` πέρασαν σε
+PowerShell 7 και Windows PowerShell 5.1, με zero-filled A/V cases τόσο χωρίς
+B-frames όσο και με B-frames. Το πρώτο copy step στο πραγματικό sample
+κατέγραψε input warnings από το όριο ανάγνωσης· το τελικό output πέρασε τους
+ξεχωριστούς decode, integrity και payload/timestamp ελέγχους.
+
+Evidence και preview 12 s βρίσκονται στο
+`D:\Users\joty79\Desktop\test fix\repair-review-20260903`. Η ένωση βρίσκεται
+στο `01:09:17.429` του output, περίπου στα 5.43 s του `join-preview.mp4`.
+Το μικρό κενό ήχου πριν από την ένωση προϋπήρχε στον source χρονισμό· δεν
+έγινε resynthesis ή time stretching.
+
+**Εκκρεμεί ανθρώπινος οπτικός/ακουστικός έλεγχος.** Δεν εκτελέστηκε η σύγκριση
+με το pre-hardening `5c202ba` και δεν έγινε promotion του prototype. Η
+επαλήθευση ίδιων payloads/timing αποδεικνύει διατήρηση του υγιούς υλικού,
+όχι ανακατασκευή των χαμένων zero-filled δεδομένων.
+
+### Follow-up: μεταβαλλόμενο desync ήδη στον source
+
+Ο χρήστης επιβεβαίωσε ότι περίπου στα 45 λεπτά το `Shift +250 ms` του
+Avidemux συγχρονίζει τόσο το αρχικό όσο και το repaired αρχείο, ενώ στην αρχή
+και στο τέλος απαιτείται διαφορετική τιμή. Συνεπώς η αφαίρεση corruption
+πέτυχε, αλλά το perceptual lip-sync παραμένει ανοικτό: το source-preserving
+repair διατήρησε και τον ήδη προβληματικό source συγχρονισμό.
+
+Νέος έλεγχος consecutive PTS έναντι nominal cadence βρήκε 248 video gaps και
+254 AAC gaps στο αρχικό, πάνω από nominal packet duration + 50 ms, χωρίς
+backwards PTS. Πολλά gaps είναι περίπου 1.6 s ή πολλαπλάσιά του. Η παλιότερη
+ένδειξη `gap_count=0` στο `audio-analysis.json` συνέκρινε το επόμενο PTS με
+το προηγούμενο **δηλωμένο** packet end· οι δηλωμένες διάρκειες ήδη περιείχαν
+τα κενά και επομένως αυτός ο έλεγχος δεν απέκλειε cadence gaps.
+
+Το νέο evidence είναι `repair-review-20260903\sync-timeline-analysis.json`.
+Τα gaps είναι παρατηρήσεις χρονισμού, όχι μετρήσεις lip-sync ούτε απόδειξη
+ότι μια γραμμική αλλαγή ταχύτητας ή αυτόματο resampling θα λύσει το πρόβλημα.
+Πριν επιλεγεί correction curve χρειάζονται τουλάχιστον μετρήσεις Shift με
+timestamp στην αρχή και στο τέλος, επιπλέον του γνωστού περίπου 45 min / +250 ms.
+
+### Follow-up: freezes και seeking στο cut
+
+Το πραγματικό αρχείο του νεότερου ελέγχου είναι
+`D:\Users\joty79\Desktop\test fix\New folder\1_smart_repaired.mp4`.
+Είναι μοντάζ 6:36.393 από διαφορετικά τμήματα του κύριου repaired αρχείου,
+όπως επιβεβαιώνουν αντιστοιχίσεις compressed packet payloads στην αρχή,
+μέση και τέλος. Τα sampled A/V offsets διατηρούνται μέσα σε περίπου 50 μs.
+
+| Αρχείο | Video gaps | Μεγαλύτερο διάστημα μεταξύ frames | Συνολική υπέρβαση συνήθους video cadence | Audio gaps |
+| --- | ---: | ---: | ---: | ---: |
+| Κύριο repaired, 01:13:28.596 | 247 | 9.667 s | 602.466 s | 248 |
+| Cut, 00:06:36.393 | 25 | 6.433 s | 52.133 s | 27 |
+
+Το cut περνά full video/audio decode χωρίς errors, αλλά στην αρχή το frame
+στο 0.766667 s ακολουθείται από το επόμενο στο 4.000000 s. Το πραγματικό
+Avidemux log καταγράφει αποτυχημένη αναζήτηση μέσα σε αυτό το κενό και
+μετάβαση στο keyframe των 4 s. Δεν βρέθηκαν non-increasing DTS. Η συμπεριφορά
+συνάδει με μεγάλα gaps και keyframe seeking, όχι με αποδεδειγμένο backwards
+decode timeline. Η εικόνα/αίσθηση κίνησης δεν επαληθεύτηκε με GUI automation.
+
+Τα video/audio gaps δεν συμπίπτουν πάντα. Ανεξάρτητο flattening σε κάθε
+stream θα άλλαζε το sync. Remux ή CFR conversion δεν ανακατασκευάζουν
+ενδιάμεσες εικόνες που δεν υπάρχουν στο αρχείο. Δεν έγινε νέο retiming ή
+αφαίρεση περιεχομένου σε αυτό το follow-up.
+
+Τα `Verify-VideoIntegrity.ps1` και `Repair-DamagedVideo.ps1` χρησιμοποιούν
+το shared `lib\MediaTimeline.ps1`: PTS σε presentation order, DTS σε packet
+order, median θετικών PTS deltas αντί για inflated packet durations.
+Gap warning όταν η διαφορά ξεπερνά `max(0.20 s, 4 × median cadence)`.
+Πρόκειται για review heuristic, όχι απόδειξη corruption ή μέτρηση lip-sync.
+Duplicate/missing timestamps και ανεπαρκή timing samples επίσης επισημαίνονται.
+
+Exit `3` σημαίνει timeline review, ακόμη κι αν αποθηκεύτηκε decoded repair.
+Το recovery διατηρείται. DetectOnly/DryRun με packet damage συνεχίζει να
+επιστρέφει `2`. Το integrity tool δίνει προτεραιότητα στο packet corruption
+(`2`) και ελέγχει timeline αφού περάσει το packet scan.
+
+Verification: 14 integrity assertions και 44 repair assertions πέρασαν σε
+PowerShell 7 και 5.1, συμπεριλαμβανομένων inflated durations, υγιών B-frames,
+και διατήρησης recovery με exit `3`. Και τα δύο πραγματικά αρχεία πλέον
+επιστρέφουν `3`. Evidence στο `repair-review-20260903`:
+`cut-timing-analysis.json`, `cut-source-matches.json`,
+`avidemux-cut-freeze-seek.log`, `cut-integrity-with-timeline.log`,
+`main-integrity-with-timeline.log`.
+
 ## Το Πρόβλημα
 
 Κάποια MP4/H.264 αρχεία φαίνονται φυσιολογικά στο container level:

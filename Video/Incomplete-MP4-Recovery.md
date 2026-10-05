@@ -33,6 +33,12 @@ pwsh -File '.\Video\Recover-IncompleteMp4.ps1' `
 
 ## Explorer context menu
 
+**Update 2026-09-05:** η ενεργή είσοδος είναι πλέον το `Recover Incomplete MP4`
+μέσα στο οργανωμένο `Media Tools` cascade, από `config\MediaTools-Menu.json`.
+Το ξεχωριστό `Recover-IncompleteMp4.reg` είναι retirement notice. Η περιγραφή
+παρακάτω κρατά το ιστορικό deployment και δεν αποτελεί τρέχουσα οδηγία import.
+Για τη σχέση αυτού του εργαλείου με τα υπόλοιπα repairs, δες `Repair-Video.md`.
+
 Το `Recover-IncompleteMp4.reg` εγκαθιστά machine-wide action μόνο για `.mp4`
 files και χρειάζεται elevation κατά το import:
 

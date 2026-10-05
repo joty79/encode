@@ -72,6 +72,13 @@ pwsh -File '.\tools\New-MediaToolsMenu.ps1'
 Για σύντομη περιγραφή κάθε PowerShell script, classification, test evidence και
 γνωστό regression risk, δες `docs/PowerShell-Tool-Guide.md`.
 
+Για προβληματικά MP4, ξεκίνα από τον [οδηγό διάγνωσης/επισκευής](Video/Repair-Video.md).
+Το νέο `Video\Repair-Video.ps1` αναλύει πρώτα και προσφέρει repair/report μέσα στο
+πρόγραμμα, με έγχρωμο μενού και πρόοδο FFmpeg ανά στάδιο (ποσοστό, elapsed, ETA,
+ταχύτητα). Ανοίγει από **Media Tools → Video → Diagnose / Repair MP4**.
+Προς το παρόν υποστηρίζει δύο συγκεκριμένες κατηγορίες βλάβης και δεν περιέχει
+ενσωματωμένο player. Το `-NoUI` κρατά απλή έξοδο με ενημερώσεις προόδου.
+
 Για terminal χρήση, τρέξε πρώτα ένα script με `-?` ή άνοιξέ το για να ελέγξεις parameters και hardcoded paths.
 
 Παράδειγμα 1: Προληπτικός έλεγχος των επιθυμητών σημείων κοπής πριν από το save (τρέχει ακαριαία):
@@ -85,10 +92,14 @@ pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\source_video.mp4' -Cut
 pwsh -File '.\Video\Detect-BadCuts.ps1' -Path 'C:\Path\To\saved_video.mp4' -UseGPU
 ```
 
-Παράδειγμα 3: Γρήγορος έλεγχος κοντέινερ και packet/NAL structure χωρίς αποκωδικοποίηση. Δεν αντικαθιστά full decode, αλλά εντοπίζει structural corruptions που μπορεί να απορρίψει το Avidemux:
+Παράδειγμα 3: Έλεγχος κοντέινερ, packet/NAL structure και μεγάλων timestamp gaps χωρίς αποκωδικοποίηση. Χρειάζεται `ffmpeg` και `ffprobe`. Δεν αντικαθιστά full decode ή έλεγχο lip-sync:
 ```powershell
 pwsh -File '.\Video\Verify-VideoIntegrity.ps1' -Path 'C:\Path\To\video.mp4'
 ```
+
+Exit codes: `0` = δεν εντοπίστηκε πρόβλημα στους συγκεκριμένους ελέγχους,
+`2` = packet corruption, `3` = χρειάζεται έλεγχος timeline, `1` = αποτυχία εκτέλεσης.
+Μεγάλα gaps μπορεί να είναι σκόπιμο VFR· το warning δεν αποδεικνύει χαμένα δεδομένα.
 
 Παράδειγμα 4: Ανίχνευση damaged H.264 ranges και smart repair με re-encode μόνο στα affected patch windows:
 ```powershell
@@ -97,6 +108,8 @@ pwsh -File '.\Video\Repair-DamagedVideo.ps1' -Path 'C:\Path\To\damaged.mp4' -Out
 ```
 
 Οι λεπτομέρειες του prototype και τα known limits βρίσκονται στο `Video\Damaged-Video-Repair.md`.
+Αν το packet repair περάσει full decode αλλά παραμένουν timeline issues, το output
+διατηρείται και επιστρέφεται `3`. Δεν θεωρείται ότι διορθώθηκαν freezes ή lip-sync.
 
 Παράδειγμα 5: Ανάκτηση H.264 και experimental original AAC από ημιτελές
 Microsoft-encoder MP4 που σταμάτησε μέσα στο `mdat` πριν γραφτεί το `moov`:

@@ -1,9 +1,12 @@
 <#
 .SYNOPSIS
-    Verifies MP4/H.264 video file packet and container integrity instantly without decoding.
+    Checks packet/container integrity and suspicious timeline gaps without decoding.
 .DESCRIPTION
     Runs ffmpeg in copy-mode to null (-c copy -f null -) to parse packet headers and NAL unit sizes.
     Detects corruptions (like 'Invalid NAL unit size' and 'missing picture') that crash editing tools like Avidemux.
+    Also scans presentation cadence and decode timestamp ordering with ffprobe.
+    Exit codes: 0 = no detected issues, 2 = packet corruption, 3 = timeline review required,
+    1 = execution failure. This does not establish visual quality or audio lip-sync.
 .PARAMETER Path
     The path to the input video file.
 .EXAMPLE
@@ -18,6 +21,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'lib\MediaTimeline.ps1')
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).Path
 if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
@@ -26,8 +30,9 @@ if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
 
 try {
     $ffmpegPath = (Get-Command ffmpeg -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    $ffprobePath = (Get-Command ffprobe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 } catch {
-    throw "ffmpeg was not found on PATH. $($_.Exception.Message)"
+    throw "ffmpeg and ffprobe are required on PATH. $($_.Exception.Message)"
 }
 
 Write-Host "🔍 Analyzing packet headers and NAL sizes for: $resolvedPath" -ForegroundColor Cyan
@@ -59,7 +64,7 @@ while (-not $reader.EndOfStream) {
     $stderrLines.Add($line)
 
     # Capture H.264 stream packet and slice validation warnings/errors
-    if ($line -match "Invalid NAL unit size|missing picture|corrupt|error|invalid|failed") {
+    if ($line -match "Invalid NAL unit size|missing picture|corrupt|error|invalid|failed|overread|truncat|partial file") {
         # Hardware/device setup warnings are unrelated to packet integrity.
         if ($line -notmatch "hwaccel|device") {
             Write-Host "❌ CORRUPTION: $line" -ForegroundColor Red
@@ -88,6 +93,11 @@ if ($corruptions.Count -eq 0) {
 } else {
     Write-Host "⚠️ Warning: Found $($corruptions.Count) packet corruption errors!" -ForegroundColor DarkYellow
     Write-Host "💡 Avidemux may reject or crash on this file." -ForegroundColor Yellow
-    Write-Host "💡 Suggestion: Run remuxing or NVENC transcode on this file to clean/repair it." -ForegroundColor Yellow
+    Write-Host "💡 Damaged encoded content may require removing affected ranges; remuxing alone cannot reconstruct it." -ForegroundColor Yellow
     exit 2
 }
+
+Write-Host 'Checking presentation cadence and decode timestamp ordering...' -ForegroundColor Cyan
+$timeline = Get-MediaTimelineReport -Ffprobe $ffprobePath -InputPath $resolvedPath
+Write-MediaTimelineReport -Report $timeline
+if ($timeline.NeedsReview) { exit 3 }

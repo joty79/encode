@@ -7,6 +7,17 @@ Use it to remember what a script does, whether it is safe to expose to Explorer,
 what changed during the large 2026-08-25/26 review, and where real-world testing is
 still required.
 
+**Current repair entry point (2026-09-05):** see
+[Video repair guide](../Video/Repair-Video.md). The new `Video\Repair-Video.ps1`
+diagnoses supported MP4 failures, offers an in-program repair/report choice,
+and verifies candidates before publishing a separate output. Its two current
+routes are malformed AAC headers and strictly proven H.264 data displacement.
+It has 18 regression assertions in both PowerShell hosts and two real-file
+automated verification results. `Recover-IncompleteMp4` is already in the
+organized menu; `Repair-DamagedVideo`, `Detect-BadCuts`, the integrity checker,
+and the new router remain terminal-only. None includes live video playback.
+The dated historical inventory below does not override this current snapshot.
+
 The large change list shown by Codex corresponds to the exact Git range
 `0f3bcf5^..4c7a110`: 28 files total, including 16 PowerShell scripts. A script
 marked **unchanged in that goal** was not silently rewritten by that change set.

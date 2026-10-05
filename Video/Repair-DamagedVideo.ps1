@@ -19,6 +19,7 @@
     - Cuts optional audio with the same timeline and re-encodes AAC in patch regions.
     - Concatenates all pieces back into a repaired MP4.
     - Refuses existing outputs and verifies the final stream structure and a full decode.
+    - Reports remaining timeline gaps separately; packet repair does not restore absent frames or lip-sync.
 
     This is intentionally conservative. It is meant to preserve the successful prototype and provide a base for future tools,
     not to be treated as a universal final repair engine for every codec/container.
@@ -30,7 +31,12 @@
     Repaired output path. Defaults to "<input>_smart_repaired.mp4".
 
 .PARAMETER DetectOnly
-    Only detect and print damaged ranges.
+    Only detect and print damaged ranges; if no packet damage is found, also report timeline issues.
+
+.NOTES
+    Exit 2 indicates detected packet damage in DetectOnly/DryRun mode.
+    Exit 3 indicates unresolved timeline issues, including after a decoded repair was saved.
+    Exit 0 does not establish visual quality or lip-sync. Execution failures return nonzero.
 
 .PARAMETER DryRun
     Detect and print planned repair segments without writing output.
@@ -100,9 +106,14 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'lib\MediaTimeline.ps1')
 $script:StepRows = [System.Collections.Generic.List[object]]::new()
 $script:Ffmpeg = $null
 $script:Ffprobe = $null
+$script:SourceReorderFrames = 0
+$script:VideoTimescale = 90000
+$script:AudioRate = 48000
+$script:AudioChannels = 2
 
 function Resolve-RequiredCommand {
     param([Parameter(Mandatory = $true)][string]$Name)
@@ -193,7 +204,7 @@ function Convert-InvariantDouble {
 function Convert-InvariantString {
     param([double]$Value)
 
-    return $Value.ToString("0.###", [Globalization.CultureInfo]::InvariantCulture)
+    return $Value.ToString("0.######", [Globalization.CultureInfo]::InvariantCulture)
 }
 
 function Invoke-RepairCommand {
@@ -259,7 +270,7 @@ function Get-VideoMetadata {
 
     $probeResult = Invoke-NativeCapture -Exe $script:Ffprobe -CommandArgs @(
         '-hide_banner', '-v', 'error', '-select_streams', 'v:0',
-        '-show_entries', 'stream=codec_name,codec_tag_string,is_avc,nal_length_size,profile,width,height,pix_fmt,level,avg_frame_rate,r_frame_rate,time_base,nb_frames,duration',
+        '-show_entries', 'stream=codec_name,codec_tag_string,is_avc,nal_length_size,profile,width,height,pix_fmt,level,has_b_frames,avg_frame_rate,r_frame_rate,time_base,nb_frames,duration',
         '-show_entries', 'format=format_name,duration,size', '-of', 'json', $ResolvedPath
     )
     if ($probeResult.ExitCode -ne 0) {
@@ -386,9 +397,24 @@ function Get-DamagedRanges {
         throw "No keyframes found; cannot build conservative visual ranges."
     }
 
+    # A long zero-filled region can contain thousands of bad packets. Searching
+    # every keyframe through a PowerShell pipeline per packet is quadratic in
+    # practice. Sort once and use an upper-bound search with the same tolerance.
+    $keyframeTimes = [double[]]@($keyframes | ForEach-Object { $_.Pts } | Sort-Object)
     $intervals = foreach ($badPacket in $badPackets) {
-        $nextKeyframe = $keyframes | Where-Object { $_.Pts -gt ($badPacket.Pts + 0.0001) } | Select-Object -First 1
-        $end = if ($nextKeyframe) { [double]($nextKeyframe.Pts) } else { [double]($badPacket.End) }
+        $threshold = [double]($badPacket.Pts) + 0.0001
+        $low = 0
+        $high = $keyframeTimes.Length
+        while ($low -lt $high) {
+            $middle = $low + [int][Math]::Floor(($high - $low) / 2.0)
+            if ($keyframeTimes[$middle] -le $threshold) {
+                $low = $middle + 1
+            }
+            else {
+                $high = $middle
+            }
+        }
+        $end = if ($low -lt $keyframeTimes.Length) { $keyframeTimes[$low] } else { [double]($badPacket.End) }
 
         [pscustomobject]@{
             Start = [Math]::Max(0.0, [double]($badPacket.Pts) - $PaddingSeconds)
@@ -501,7 +527,14 @@ function Add-CopySegment {
         "-i", $ResolvedPath,
         "-map", "0:v:0", "-map", "0:a:0?",
         "-c", "copy",
+        # A decode-time cutoff can retain future presentation frames from the
+        # next GOP. Bound copied video by presentation time as well.
+        "-bsf:v", ("noise=drop='gte(pts*tb,{0})'" -f (Convert-InvariantString ($End - $Start))),
+        # Input seeking can retain earlier AAC packets even after video resumes
+        # on a clean keyframe. Do not copy corrupt audio from before this cut.
+        "-copypriorss:a", "0",
         "-avoid_negative_ts", "make_zero",
+        "-video_track_timescale", ([string]$script:VideoTimescale),
         "-movflags", "+faststart",
         $segmentPath
     )
@@ -534,7 +567,9 @@ function Add-ReencodedSegment {
         "-i", $ResolvedPath,
         "-map", "0:v:0", "-map", "0:a:0?",
         "-c:v", $VideoEncoder,
-        "-preset", $EncoderPreset
+        "-preset", $EncoderPreset,
+        # Keep decoder reordering across copied and encoded pieces compatible.
+        "-bf", ([string]$script:SourceReorderFrames)
     )
 
     if ($VideoEncoder -eq 'h264_nvenc') {
@@ -549,8 +584,9 @@ function Add-ReencodedSegment {
         "-fps_mode", "vfr",
         "-c:a", "aac",
         "-b:a", "160k",
-        "-ar", "48000",
-        "-ac", "2",
+        "-ar", ([string]$script:AudioRate),
+        "-ac", ([string]$script:AudioChannels),
+        "-video_track_timescale", ([string]$script:VideoTimescale),
         "-movflags", "+faststart",
         $segmentPath
     )
@@ -589,6 +625,22 @@ if (-not ($DetectOnly -or $DryRun)) {
 }
 
 $metadata = Get-VideoMetadata -ResolvedPath $resolvedPath
+$script:SourceReorderFrames = [int]$metadata.Stream.has_b_frames
+$timeBaseParts = ([string]$metadata.Stream.time_base).Split('/')
+if ($timeBaseParts.Count -ne 2 -or [int]$timeBaseParts[0] -ne 1 -or [int]$timeBaseParts[1] -le 0) {
+    throw 'Unsupported source video time base for copy/patch concatenation.'
+}
+$script:VideoTimescale = [int]$timeBaseParts[1]
+$audioProbe = Invoke-NativeCapture -Exe $script:Ffprobe -CommandArgs @(
+    '-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_name,sample_rate,channels', '-of', 'json', $resolvedPath
+)
+if ($audioProbe.ExitCode -ne 0) { throw "Audio metadata probe failed. $($audioProbe.Stderr)" }
+$audioStreams = @(($audioProbe.Stdout | ConvertFrom-Json).streams)
+if ($audioStreams.Count -gt 0) {
+    if ($audioStreams[0].codec_name -ne 'aac') { throw 'Mixed copy/patch repair currently requires AAC audio or no audio.' }
+    $script:AudioRate = [int]$audioStreams[0].sample_rate
+    $script:AudioChannels = [int]$audioStreams[0].channels
+}
 Write-Host "Input: $resolvedPath" -ForegroundColor Cyan
 Write-Host ("Duration: {0} | Codec: {1} | {2}x{3}" -f $metadata.DurationLabel, $metadata.Stream.codec_name, $metadata.Stream.width, $metadata.Stream.height) -ForegroundColor Gray
 
@@ -617,6 +669,9 @@ if ($detection.BadPackets.Count -gt 0) {
 
 if ($detection.Ranges.Count -eq 0) {
     Write-Host "No damaged H.264 packet ranges detected." -ForegroundColor Green
+    $timeline = Get-MediaTimelineReport -Ffprobe $script:Ffprobe -InputPath $resolvedPath
+    Write-MediaTimelineReport -Report $timeline
+    if ($timeline.NeedsReview) { exit 3 }
     return
 }
 
@@ -624,6 +679,11 @@ Write-Host "Detected visual-risk ranges:" -ForegroundColor Yellow
 foreach ($range in $detection.Ranges) {
     Write-Host ("  {0} - {1} ({2:n3}s)" -f (Format-RepairTime $range.Start), (Format-RepairTime $range.End), ($range.End - $range.Start)) -ForegroundColor Yellow
 }
+$removedSeconds = 0.0
+foreach ($range in $detection.Ranges) { $removedSeconds += $range.End - $range.Start }
+Write-Host ("Planned removal: {0} | Approximate remaining duration: {1}" -f `
+    (Format-RepairTime $removedSeconds), (Format-RepairTime ($metadata.Duration - $removedSeconds))) -ForegroundColor Yellow
+Write-Host 'Damaged ranges are removed from both video and audio; missing source data is not reconstructed.' -ForegroundColor Yellow
 
 $patchGroups = @(Get-PatchGroups -Ranges $detection.Ranges -Keyframes $detection.Keyframes -Duration $metadata.Duration)
 Write-Host "Patch windows:" -ForegroundColor Cyan
@@ -665,7 +725,32 @@ try {
     $segmentIndex = Add-CopySegment -ResolvedPath $resolvedPath -TempRoot $tempRoot -Segments $segments -Index $segmentIndex -Start $cursor -End $metadata.Duration
 
     $concatList = Join-Path $tempRoot "concat.txt"
-    $segments | ForEach-Object { "file '$($_.Replace("'", "'\''"))'" } | Set-Content -LiteralPath $concatList -Encoding ASCII
+    $concatLines = foreach ($segment in $segments) {
+        # A copied last AAC packet can carry a duration spanning a source gap.
+        # Preserve normal container timing (including codec padding/reordering),
+        # but cap an abnormally stretched AAC tail at the retained video end.
+        $segmentProbe = Invoke-NativeCapture -Exe $script:Ffprobe -CommandArgs @(
+            '-v', 'error', '-show_entries',
+            'stream=codec_type,codec_name,sample_rate,start_time,duration:format=duration', '-of', 'json', $segment
+        )
+        if ($segmentProbe.ExitCode -ne 0) {
+            throw "Segment timing probe failed: $segment. $($segmentProbe.Stderr)"
+        }
+        $segmentInfo = $segmentProbe.Stdout | ConvertFrom-Json
+        $segmentVideo = @($segmentInfo.streams | Where-Object { $_.codec_type -eq 'video' })[0]
+        $segmentEnd = (Convert-InvariantDouble $segmentVideo.start_time) + (Convert-InvariantDouble $segmentVideo.duration)
+        if ($segmentEnd -le 0.0) { throw "Invalid segment video duration: $segment" }
+        "file '$($segment.Replace("'", "'\''"))'"
+        $segmentAudio = @($segmentInfo.streams | Where-Object { $_.codec_type -eq 'audio' })
+        if ($segmentAudio.Count -eq 1 -and $segmentAudio[0].codec_name -eq 'aac') {
+            $audioEnd = (Convert-InvariantDouble $segmentAudio[0].start_time) + (Convert-InvariantDouble $segmentAudio[0].duration)
+            $audioFrameSeconds = 1024.0 / (Convert-InvariantDouble $segmentAudio[0].sample_rate)
+            if (($audioEnd - $segmentEnd) -gt (2.0 * $audioFrameSeconds)) {
+                "duration $(Convert-InvariantString $segmentEnd)"
+            }
+        }
+    }
+    $concatLines | Set-Content -LiteralPath $concatList -Encoding ASCII
 
     $concatArgs = @(
         "-hide_banner", "-n", "-v", "warning",
@@ -686,6 +771,14 @@ try {
     Write-Host "Repair output: $outputFullPath" -ForegroundColor Green
     $script:StepRows | Format-Table -AutoSize | Out-String | Write-Host
     Write-Host "Automated stream probe and full-decode verification passed. Visual review is still required." -ForegroundColor Yellow
+    # Keep a successfully decoded recovery even if its inherited timeline needs
+    # review. A diagnostic failure must not delete the useful recovered file.
+    $timeline = Get-MediaTimelineReport -Ffprobe $script:Ffprobe -InputPath $outputFullPath
+    Write-MediaTimelineReport -Report $timeline
+    if ($timeline.NeedsReview) {
+        Write-Warning 'Packet repair completed, but timeline issues remain. Existing freezes and audio desynchronization have not been repaired.'
+        exit 3
+    }
 }
 finally {
     if ($KeepTemp) {

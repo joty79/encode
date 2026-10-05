@@ -46,12 +46,14 @@ function Invoke-Prototype {
 function New-H264Fixture {
     param(
         [Parameter(Mandatory = $true)][string]$OutputPath,
-        [switch]$NoAudio
+        [switch]$NoAudio,
+        [switch]$NoBFrames
     )
     $args = @('-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=160x90:rate=25')
     if (-not $NoAudio) { $args += @('-f', 'lavfi', '-i', 'sine=frequency=700:sample_rate=48000') }
-    $args += @('-t', '3.1', '-c:v', 'libx264', '-g', '25', '-keyint_min', '25', '-sc_threshold', '0', '-pix_fmt', 'yuv420p')
-    if (-not $NoAudio) { $args += @('-c:a', 'aac') }
+    $args += @('-t', '3.1', '-c:v', 'libx264', '-g', '25', '-keyint_min', '25', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', '-video_track_timescale', '90000')
+    if ($NoBFrames) { $args += @('-bf', '0') }
+    if (-not $NoAudio) { $args += @('-c:a', 'aac', '-ar', '44100') }
     $args += $OutputPath
     & $script:ffmpeg @args
     if ($LASTEXITCODE -ne 0) { throw "Fixture creation failed: $OutputPath" }
@@ -117,6 +119,25 @@ try {
     Assert-Condition (@($probe.streams | Where-Object codec_type -eq 'video').Count -eq 1) 'Repaired output must contain video.'
     Assert-Condition (@($probe.streams | Where-Object codec_type -eq 'audio').Count -eq 1) 'Repaired output must contain audio.'
 
+    # A structurally repaired file can still inherit long source holds. Keep
+    # the recovered output, but report a distinct non-clean timeline status.
+    $gappedDamage = Join-Path $tempRoot 'damaged-with-gap.mp4'
+    & $ffmpeg -v error -n -i $healthy -vf "setpts='PTS+2/TB*gte(T,1.5)'" `
+        -af "asetpts='PTS+2/TB*gte(T,1.5)'" -fps_mode vfr -c:v libx264 `
+        -g 25 -keyint_min 25 -sc_threshold 0 -c:a aac $gappedDamage
+    if ($LASTEXITCODE -ne 0) { throw 'Gap plus corruption fixture creation failed.' }
+    Damage-H264Packet -InputPath $gappedDamage
+    $gappedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $gappedDamage).Hash
+    $gappedOutput = Join-Path $tempRoot 'packet-repaired-with-gap.mp4'
+    $gappedRepair = Invoke-Prototype -InputPath $gappedDamage -ExtraArguments @(
+        '-OutputPath', $gappedOutput, '-StartPadding', '0.05', '-MergeGap', '0.1',
+        '-Encoder', 'libx264', '-Preset', 'ultrafast', '-Cq', '23'
+    )
+    Assert-Condition ($gappedRepair.ExitCode -eq 3) "Inherited timeline gaps must return review status after packet repair. $($gappedRepair.Combined)"
+    Assert-Condition (Test-Path -LiteralPath $gappedOutput -PathType Leaf) 'Timeline-review status must retain the successfully decoded recovery.'
+    Assert-Condition ($gappedRepair.Combined -match 'full-decode verification passed' -and $gappedRepair.Combined -match 'timeline issues remain') 'Decode success and unresolved timeline issues must both be reported.'
+    Assert-Condition ((Get-FileHash -Algorithm SHA256 -LiteralPath $gappedDamage).Hash -eq $gappedHash) 'Timeline review must preserve the damaged source.'
+
     $outputHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash
     $collision = Invoke-Prototype -InputPath $damaged -ExtraArguments @('-OutputPath', $output)
     Assert-Condition ($collision.ExitCode -ne 0) 'Existing prototype output must return nonzero.'
@@ -131,6 +152,42 @@ try {
     Assert-Condition ($failedRepair.ExitCode -ne 0) 'A failed re-encode step must return nonzero.'
     Assert-Condition (-not (Test-Path -LiteralPath $failedOutput)) 'A failed repair must remove any partial final output.'
     Assert-Condition ((Get-FileHash -Algorithm SHA256 -LiteralPath $damaged).Hash -eq $damagedHash) 'A failed repair must preserve source bytes.'
+
+    # A damaged AAC packet just before a clean video keyframe used to survive
+    # input seeking in a copy segment, making the final full decode fail.
+    # Cover both the real source (no B frames) and reordered copy/patch joins.
+    foreach ($noBFrames in @($true, $false)) {
+        $avCase = if ($noBFrames) { 'no-b' } else { 'b-frames' }
+        $healthyAv = Join-Path $tempRoot "healthy-av-$avCase.mp4"
+        New-H264Fixture -OutputPath $healthyAv -NoBFrames:$noBFrames
+        $damagedAv = Join-Path $tempRoot "zero-filled-av-$avCase.mp4"
+        Copy-Item -LiteralPath $healthyAv -Destination $damagedAv
+        $avPacketJson = & $ffprobe -v error -show_packets -show_entries 'packet=stream_index,pts_time,pos,size' -of json $damagedAv | Out-String
+        if ($LASTEXITCODE -ne 0) { throw 'A/V fixture packet probe failed.' }
+        $avBytes = [IO.File]::ReadAllBytes($damagedAv)
+        $zeroedVideo = 0
+        $zeroedAudio = 0
+        foreach ($packet in ($avPacketJson | ConvertFrom-Json).packets) {
+            $pts = [double]::Parse([string]$packet.pts_time, [Globalization.CultureInfo]::InvariantCulture)
+            $start = if ($packet.stream_index -eq 0) { 1.8 } else { 1.85 }
+            if ($pts -ge $start -and $pts -lt 2.0) {
+                [Array]::Clear($avBytes, [int]$packet.pos, [int]$packet.size)
+                if ($packet.stream_index -eq 0) { $zeroedVideo++ } else { $zeroedAudio++ }
+            }
+        }
+        Assert-Condition ($zeroedVideo -eq 5 -and $zeroedAudio -gt 0) 'Fixture must contain a late zero-filled video cluster and AAC packets before the next keyframe.'
+        [IO.File]::WriteAllBytes($damagedAv, $avBytes)
+        $damagedAvHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $damagedAv).Hash
+        $avOutput = Join-Path $tempRoot "fixed-av-$avCase.mp4"
+        $avRepair = Invoke-Prototype -InputPath $damagedAv -ExtraArguments @(
+            '-OutputPath', $avOutput, '-StartPadding', '0.05', '-MergeGap', '0.1',
+            '-Encoder', 'libx264', '-Preset', 'ultrafast', '-Cq', '23'
+        )
+        Assert-Condition ($avRepair.ExitCode -eq 0) "Zero-filled A/V repair must pass full decode without copying pre-cut AAC packets. $($avRepair.Combined)"
+        Assert-Condition ($avRepair.Combined -match '00:00:01\.750 - 00:00:02\.000') 'Late clustered corruption must end at the next clean keyframe.'
+        Assert-Condition (Test-Path -LiteralPath $avOutput -PathType Leaf) 'A/V repair must keep a verified output.'
+        Assert-Condition ((Get-FileHash -Algorithm SHA256 -LiteralPath $damagedAv).Hash -eq $damagedAvHash) 'A/V repair must preserve source bytes.'
+    }
 
     $videoOnly = Join-Path $tempRoot 'video-only.mp4'
     New-H264Fixture -OutputPath $videoOnly -NoAudio

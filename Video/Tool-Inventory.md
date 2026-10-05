@@ -2,9 +2,114 @@
 
 ## Purpose
 
-This is the current source of truth for the `Video` folder during Windows 11 re-onboarding. It records which artifacts are supported, installed, pending review, dependency-blocked, prototypes, support files, or empty scaffolding. All current context-menu artifacts were imported on 2026-08-26 for an explicit Explorer discovery pass; that does not replace per-workflow runtime and visual acceptance.
+This is the operational map for the `Video` folder. Start with the dated snapshot below to distinguish script behavior, current menu registration, and unfinished acceptance work. Older runtime evidence is preserved afterwards; it does not prove the current Explorer layout or launcher behavior.
 
-## Current Installed and Verified Menus
+## Repair workflow update — 2026-09-05
+
+Start with [Repair-Video.md](Repair-Video.md) for a symptom-to-script guide,
+interactive usage, supported repair routes, current menu placement and playback
+limitations. `Repair-Video.ps1` is a new **terminal-only experimental router**:
+it distinguishes malformed AAC headers from a proven displaced-data/duplicate-index
+H.264 case before choosing a repair. Unknown corruption and timeline gaps remain
+manual review. It uses `Repair-DamagedVideo.ps1` as the bounded-cut backend.
+
+Both real `E:\1.mp4` / `E:\2.mp4` samples passed the router's output probe,
+full decode and timeline gates. Eighteen router and 44 backend assertions passed
+in PowerShell 7 and 5.1. These are automated checks; Avidemux import/playback
+was not verified because Computer Use was stopped. Ask before future GUI control.
+
+`Recover-IncompleteMp4` is already in the organized `.mp4` cascade; “incomplete”
+describes its supported input, not an empty implementation. `Detect-BadCuts`
+has terminal progress, not live video playback, and its 80 ms alignment tolerance
+is not a frame-exact editing guarantee. `Repair-DamagedVideo` remains a prototype,
+now also preserving source video timescale/audio rate/channels across patches.
+
+The fresh read-only menu audit still matches the `.mp4` Media Tools tree but
+reports 3 missing/mismatched folder roots, 9 legacy live roots and 18 catalog
+hive-policy mismatches. No menu installation or new verbs were applied.
+
+## Current Snapshot — 2026-09-03
+
+Audited checkout: `D:\Users\joty79\scripts\encode`, commit `f4d3ee1`.
+The file-menu integration now uses the generated **Media Tools** cascade from
+`config\MediaTools-Menu.json` and `Video\Media-Tools.reg`. Most companion `.reg`
+files have become comment-only retirement notices. Their presence does not mean
+there is still a separate direct menu to install.
+
+The read-only live audit found all **32 file-extension cascade roots matching
+their complete expected Registry trees**. The selected-folder and folder-background
+production roots are missing; older folder/desktop entries remain installed.
+This explains why file and folder menus do not consistently reflect the same
+generation of the project. Current Explorer rendering/click behavior was not
+retested in this audit.
+
+### What each Video tool is for
+
+In this table, **registered** means current Registry evidence, not a fresh
+Explorer click test. Historical tests remain historical unless explicitly dated
+as today's checks below.
+
+| Script | Use | Current access | Evidence / remaining work |
+| --- | --- | --- | --- |
+| `video_encode.ps1` | H.264 encoding, including the established interlaced-video path | File cascade registered; intended folder cascade missing | Historical real encode evidence; automatic NVENC/x264 changes are in the September 2 commit and were not rerun in this audit |
+| `add_to_queue.ps1` | Add videos for later encoding | File cascade registered; intended folder cascade missing | Historical silent-launch and queue evidence; current Explorer launcher acceptance remains |
+| `run_queue.ps1` | Process queued videos | Intended folder-background cascade missing; older queue menu remains | Historical success/failure-retention evidence; align and test current menu entry |
+| `inspector\inspect.ps1` | Read metadata and report media characteristics | `MediaInfo` file action registered; intended folder cascade missing | Historical runtime evidence; metadata inspection is not a packet/full-decode integrity check |
+| `RemuxToMP4.ps1` | Convert an MKV container to MP4 with supported streams | `.mkv` cascade registered | Historical real remux and source/collision safety tests; not a generic corrupt-payload repair |
+| `Merge-MP4-SRT.ps1` | Merge video and matching subtitles into MKV | `.mp4` cascade registered | Historical real stream/output and safety tests |
+| `convert_webp_smart.ps1` | Convert supported static/animated images | Image cascades registered; intended folder cascade missing | Historical real conversion, timing, and safety tests |
+| `Repair-TsTimestampRemux.ps1` | Analyze TS timestamps or remux TS without re-encoding | `.ts` cascade registered; old folder entries remain | Historical synthetic repair tests and real clean-TS analysis; representative broken-TS acceptance still pending |
+| `join-wmv-smart.ps1` | Join related WMV files using ASFBin | `.wmv` cascade registered | Historical synthetic join passed; irregular real WMV remains the decisive test |
+| `Recover-IncompleteMp4.ps1` | Recover a specific truncated Microsoft H.264 recording without its final MP4 index | `.mp4` cascade registered | Historical real recovery evidence; narrow format/layout scope, audio and launcher limits documented in `Incomplete-MP4-Recovery.md` |
+| `Verify-VideoIntegrity.ps1` | Packet/container corruption and timeline-gap scan | Terminal-only; absent from menu manifest | 14 assertions pass in both shells; main repaired/cut return timeline-review exit `3`; does not decode every frame or establish lip-sync |
+| `Detect-BadCuts.ps1` | Check proposed cut alignment, or perform full decode diagnostics | Terminal-only; absent from menu manifest | Passed today's 13 regression assertions; scene changes alone are not proof of damage |
+| `Repair-Mp4DisguisedTs.ps1` | Remux a file named `.mp4` whose actual container is MPEG-TS | Terminal-only; absent from menu manifest | Historical 25 real assertions in both shells; rejects an ordinary MP4 container |
+| `Repair-DamagedVideo.ps1` | Detect bad H.264 packet ranges, drop damaged ranges, flag remaining timeline issues | Prototype, terminal-only | 44 assertions pass in both shells. Real output passes full decode/payload checks, but user confirms freezes/desync; new timeline scan flags them. Pre-hardening comparison remains; see `Damaged-Video-Repair.md` |
+
+### Checks performed today
+
+- `tools\Test-EncodeEnvironment.ps1`: `READY`, exit `0`. This checks dependency
+  availability and FFmpeg response, not a fresh QTGMC/NVENC encode.
+- `tests\Test-VerifyVideoIntegrityReal.ps1`: initially 6 assertions; after timeline diagnostics, 14 passed in both shells.
+- `tests\Test-DetectBadCutsReal.ps1`: 13 assertions passed, exit `0`.
+- `tests\Test-RepairDamagedVideoPrototype.ps1`: initial 30 assertions passed;
+  after the real-file repair fixes, 40 passed; after timeline diagnostics, 44 passed in both PowerShell 7 and 5.1.
+- The cut-diagnostic suite ran in PowerShell 7 only in this audit.
+- `Verify-VideoIntegrity.ps1` on
+  `D:\Users\joty79\Desktop\test fix\1.mp4`: 30,838 corruption diagnostic messages
+  (`Invalid NAL unit size` / `missing picture`), exit `2`, 2.29 seconds.
+  The count is messages, not distinct damaged frames. Metadata-only ffprobe
+  returned exit `0`. The source was not modified. A subsequent authorized repair
+  produced `1_smart_repaired.mp4`, duration 01:13:28.595533, with clean full decode
+  and identical retained compressed payloads; details are in `Damaged-Video-Repair.md`.
+
+### Menu audit findings
+
+`tools\Test-EncodeContextMenus.ps1` scanned 22 `.reg` files and compared 35
+expected logical roots with 41 live roots. Its ordinary exit `0` means the audit
+ran; it does not mean the findings are clean. Use the findings or `-Strict` when
+an automated gate is needed.
+
+- **3 missing definitions / 3 tree mismatches:** production
+  `Directory\shell\MediaTools`, production
+  `Directory\Background\shell\MediaTools`, and the remaining direct
+  `audio\run_audio_queue.reg` definition for `RunAudioQueue`.
+- **9 live roots without a current `.reg` owner:** older folder/background TS
+  and no-audio verbs plus folder/desktop preview roots. This is evidence of
+  deployment drift, not authorization to delete them.
+- **18 catalog hive-policy mismatches:** the catalog still declares a hive
+  policy for retired comment-only `.reg` artifacts, which now contain no keys.
+- **1 ambiguous HKCR definition:** the remaining direct audio queue artifact.
+- No broken referenced repository targets, duplicate source roots, uncataloged
+  artifacts, or catalog definition-count mismatches were found.
+
+For fresh detailed JSON/Markdown evidence, run the auditor with
+`-OutputDirectory` pointing to a chosen report directory. No Registry changes
+were made during this audit. Earlier claims below or in older acceptance docs
+that all definitions are installed are historical and are superseded by this
+snapshot for the current checkout/machine.
+
+## Historical Installed and Verified Menus — August 2026
 
 The following legacy Registry groups were manually imported and runtime-verified on 2026-08-25. They are not yet managed by an installer or uninstaller.
 
@@ -101,11 +206,17 @@ populate or remove them only during the Inspector/context-menu redesign.
 - A variable-delay two-frame WebP retained both frames and its 0.600-second timing when converted directly by FFmpeg instead of the legacy fixed-25-fps PNG extraction path.
 - `tests\Test-ConvertSmartImageSafety.ps1` passes 25 real assertions under PowerShell 7 and Windows PowerShell 5.1, including after the Limited policy became active. All five reviewed Registry entries were imported and read back with valid icons, PowerShell 7 commands, and context-only pause behavior.
 
-## Agreed Order
+## Remaining Work
 
-The `Video` folder review is complete: every PowerShell workflow is classified as
-installed, supported terminal-only, characterized prototype, or support/scaffolding.
-All current Registry artifacts are installed for the explicit discovery pass. Use
-`docs\Context-Menu-Verification.md` to complete visual and launcher acceptance before
-grouping or redesigning the menu set. Installer/uninstaller architecture remains
-deferred until that organization is agreed.
+1. Reconcile the current menu manifest/catalog and folder/background deployment,
+   preserving existing access until the intended replacements are accepted in
+   Explorer. `docs\Context-Menu-Verification.md` retains earlier acceptance evidence.
+2. Decide how the three supported terminal-only tools should be exposed for
+   routine use. Keep prototype repair clearly identified if it is exposed later.
+3. Visually review the repaired `test fix\1_smart_repaired.mp4`, especially the
+   join at 01:09:17.429. Its full decode and retained-payload/timing checks passed.
+   The pre-hardening comparison in `Damaged-Video-Repair.md` remains required
+   before promoting this prototype more broadly.
+4. Complete representative broken-TS, irregular-WMV, and remaining Explorer
+   launcher tests. Mark completion per workflow rather than declaring the whole
+   folder finished from synthetic tests or Registry presence alone.

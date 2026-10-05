@@ -2,6 +2,25 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-09-26
+
+- Media Info 2.4 restores an everyday media-first overview with container, size/duration, video, audio and subtitle facts. Smart Cut hints are optional, technical evidence remains in R/full exports, and C copies the current page. Timing samples open their dedicated results page instead of replacing the overview with a diagnosis.
+- Fixed Media Info action shortcuts with Greek keyboard layout (D/δ and the other action keys); text-entry dialogs still retain the typed characters.
+- Media Info 2.3 now leads with short Smart Cut explanations and a suggested next step. Versioned H.264/HEVC format checks distinguish repair restrictions, missing evidence and sampled timing concerns; all reasons and raw diagnostics remain available in Diagnosis and complete reports. These checks do not certify Avidemux import, selected cut dependencies or export compatibility.
+
+## 2026-09-05
+
+- Redesigned the repair choice screen with a centered layout, separate file/diagnosis sections, descriptive action cards, high-contrast selection and an anchored keyboard footer. Compact layouts cover narrow/short terminals; same-screen resize tests now include 50x18 and 40x10 viewports.
+- Added a colored keyboard menu and live per-stage FFmpeg progress to `Repair-Video`, with elapsed time, estimated time remaining, processing speed and persistent timings/logs. Hashing and legacy backend stages show activity without invented percentages; `-NoUI` retains plain heartbeats. The existing MP4 context-menu action loads the update directly. A fresh `1.mp4` repair passed all publication gates in about 83 seconds; decoder thread benchmarks favored the existing automatic default, so repair algorithms and validation remain unchanged.
+- Added the experimental `Repair-Video.ps1` diagnosis/repair router with an interactive repair/report choice, JSON evidence, protected outputs, source hashes and strict publication gates. It recognizes malformed AAC sample headers and a narrowly verified H.264 displaced-data/duplicate-index layout. On the two real test files it rebuilt AAC configuration without changing video payloads, and reduced apparent damage from 25,982 packets to 115 before a bounded 7.19-second removal. Both outputs passed full decode and timeline checks; Avidemux GUI acceptance remains unverified. Eighteen router assertions pass in PowerShell 7 and 5.1.
+- Fixed copy/patch time-base and audio-rate mismatches in `Repair-DamagedVideo.ps1`; patches now retain the source video timescale, audio sample rate and channel count. All 44 backend assertions pass in both shells with 90 kHz video / 44.1 kHz AAC fixtures. The fast integrity checker now flags atom overreads/truncation instead of declaring a malformed header clean.
+- Added a symptom-to-script repair guide explaining the existing recovery/cut tools, current menu access and missing playback acceptance work. Refreshed the recovery-menu documentation to distinguish the active organized cascade from its retired standalone registry artifact.
+
+## 2026-09-03
+
+- Added shared timeline diagnostics to the MP4 integrity and damaged-video repair tools after real playback exposed long frame holds in a decode-clean recovery. Presentation cadence is checked independently of inflated packet durations, with B-frame ordering handled correctly. Exit `3` flags timeline review; a successfully decoded repair is retained with an explicit unresolved-timing warning. The main recovery and Avidemux cut now report 247 and 25 video gaps respectively; the videos themselves were not retimed. Fourteen integrity and 44 repair assertions pass in PowerShell 7 and 5.1.
+- Improved `Repair-DamagedVideo.ps1` for a real zero-filled H.264/AAC MP4: faster keyframe range lookup, explicit removed-duration reporting, audio-preroll exclusion, presentation-time boundaries for copied video, compatible patch B-frame reordering, and concat timing for stretched AAC tails. The recovered file preserves all retained compressed picture/audio payloads and their relative timing and passes full decode; missing ranges are removed, not reconstructed. Forty prototype assertions pass in PowerShell 7 and 5.1. Real-file evidence and remaining visual/comparison gates are recorded in `Video\Damaged-Video-Repair.md`.
+
 ## 2026-09-01
 
 - Added x264 as a first-class choice to `Video\video_encode.ps1`. Auto now proves NVENC with an actual one-frame encode and falls back to x264 CRF 19/fast when NVIDIA encoding is unavailable, while preserving the existing NVENC QP 22/P5 behavior. Encoder choice and separate quality values persist in portable per-script batch settings with validation. The focused contract passes under PowerShell 7 and 5.1, and a real x264 H.264/AAC smoke output passed strict full decode.

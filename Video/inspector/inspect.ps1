@@ -1,227 +1,69 @@
-# inspect.ps1
-# Video / Audio inspection tool (read-only)
-
-param (
-    [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
-    [string[]]$Paths
+#requires -Version 7.0
+# Explorer uses pwsh -NoExit -NoProfile -File. Read-only media inspection.
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory, Position=0, ValueFromRemainingArguments)][string[]]$Paths,
+    [switch]$NonInteractive, [switch]$Deep,
+    [ValidateRange(0,2147483647)][double]$StartSeconds = 0,
+    [ValidateRange(10,20000)][int]$MaxPackets = 5000,
+    [ValidateRange(1,120)][int]$TimeoutSeconds = 30,
+    [ValidateRange(0,65535)][int]$StreamIndex,
+    [string]$JsonPath, [string]$TextPath
 )
-
-# --- Load helpers ---
-$root = $PSScriptRoot
-. "$root\lib\Metrics.ps1"
-. "$root\lib\Policy.ps1"
-. "$root\lib\Render.ps1"
-
-# --- ffprobe executable ---
-$ffprobeCommand = Get-Command -Name 'ffprobe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $ffprobeCommand) {
-    throw 'Required command ffprobe was not found in PATH.'
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\lib\Probe.ps1"
+. "$PSScriptRoot\lib\Metrics.ps1"
+. "$PSScriptRoot\lib\Policy.ps1"
+. "$PSScriptRoot\lib\render.ps1"
+$ffprobe = (Get-Command ffprobe -CommandType Application | Select-Object -First 1).Source
+$interactive = -not $NonInteractive -and -not [Console]::IsInputRedirected
+$version = Invoke-InspectorProbe $ffprobe @('-version') 10
+$report = [ordered]@{
+    schemaVersion = 1; inspectorVersion = '2.4'; generatedUtc = [DateTime]::UtcNow.ToString('o')
+    tool = [ordered]@{ path=$ffprobe; version=($version.stdout -split '\r?\n')[0]; powershell="$($PSVersionTable.PSVersion)" }
+    scope = 'Stream/container metadata by default; packet samples only on explicit request.'
+    interpretation = 'No Avidemux eligibility verdict. Import, preview, Copy and Smart Cut depend on build, selected cuts and dependencies.'
+    files = [Collections.Generic.List[object]]::new(); failures = [Collections.Generic.List[object]]::new()
 }
-
-$ffprobe = $ffprobeCommand.Source
-$hadFailures = $false
-$videoExtensions = "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.mpg", "*.mpeg", "*.vob", "*.ts"
-
+$targets = [Collections.Generic.List[object]]::new()
+$extensions = '.mp4','.mkv','.avi','.mov','.wmv','.mpg','.mpeg','.vob','.ts','.m2ts','.mts','.webm','.m4v'
+if ($Deep -and ($Paths.Count -ne 1 -or -not [IO.File]::Exists($Paths[0]))) {
+    throw '-Deep requires one explicit file. For folders, select a file using the interactive D action.'
+}
 foreach ($requestedPath in $Paths) {
-
-    # 🔸 FIX: Clean quotes just in case
-    $requestedPath = $requestedPath -replace '"', ''
-
-    # -----------------------------
-    # Resolve files to inspect
-    # -----------------------------
-    $targets = @()
-
-    # 🔸 FIX: .NET Directory Check
-    if ([System.IO.Directory]::Exists($requestedPath)) {
-        # Folder mode
-        $targets = Get-ChildItem `
-            -LiteralPath $requestedPath `
-            -Recurse `
-            -File `
-            -Include $videoExtensions
+    try {
+        $item = Get-Item -LiteralPath $requestedPath
+        if ($item.PSIsContainer) {
+            $found = @(Get-ChildItem -LiteralPath $item.FullName -Recurse -File | Where-Object Extension -in $extensions | Sort-Object FullName)
+            if (-not $found.Count) { throw "No video files found: $requestedPath" }
+            foreach ($file in $found) { $targets.Add($file) }
+        } else { $targets.Add($item) }
+    } catch {
+        $report.failures.Add([ordered]@{ path=$requestedPath; stage='Resolve'; error=$_.Exception.Message })
+        Write-Warning $_.Exception.Message
     }
-    # 🔸 FIX: .NET File Check
-    elseif ([System.IO.File]::Exists($requestedPath)) {
-        # Single file mode
-        $targets = @( Get-Item -LiteralPath $requestedPath )
-    }
-    else {
-        Write-Warning "Invalid path: $requestedPath"
-        $hadFailures = $true
-        continue
-    }
-
-    if ($targets.Count -eq 0) {
-        Write-Warning "No video files found in folder: $requestedPath"
-        $hadFailures = $true
-        continue
-    }
-
-    foreach ($file in $targets) {
-
-        $targetPath = $file.FullName
-
-        # --- ffprobe JSON ---
-        $probeOutput = & $ffprobe `
-            -v error `
-            -print_format json `
-            -show_streams `
-            -show_format `
-            $targetPath 2>&1
-        $ffprobeExitCode = $LASTEXITCODE
-        $probeText = $probeOutput -join [Environment]::NewLine
-
-        if ($ffprobeExitCode -ne 0) {
-            Write-Warning "ffprobe failed with exit code $ffprobeExitCode`: $targetPath"
-            if (-not [string]::IsNullOrWhiteSpace($probeText)) {
-                Write-Host $probeText -ForegroundColor DarkYellow
-            }
-            $hadFailures = $true
-            continue
-        }
-
-        try {
-            $json = $probeText | ConvertFrom-Json -ErrorAction Stop
-        }
-        catch {
-            Write-Warning "ffprobe returned invalid JSON: $targetPath"
-            $hadFailures = $true
-            continue
-        }
-
-        # --- Select streams ---
-        $video = $json.streams | Where-Object codec_type -eq "video" | Select-Object -First 1
-        $audio = $json.streams | Where-Object codec_type -eq "audio" | Select-Object -First 1
-
-        if (-not $video) {
-            Write-Warning "No video stream found: $targetPath"
-            $hadFailures = $true
-            continue
-        }
-
-        # =============================
-        # VIDEO INFO
-        # =============================
-
-        $width = [int]$video.width
-        $height = [int]$video.height
-
-        # SAR / DAR
-        $sar = $video.sample_aspect_ratio
-        if (-not $sar -or $sar -eq "0:1") { $sar = "1:1" }
-
-        $dar = $video.display_aspect_ratio
-
-        # FPS
-        $avgFps = 0.0
-        if ($video.avg_frame_rate -and $video.avg_frame_rate -ne "0/0") {
-            $n, $d = $video.avg_frame_rate -split '/'
-            if ($d -ne 0) {
-                $avgFps = [math]::Round($n / $d, 3)
-            }
-        }
-
-        $fpsMode = "CFR"
-        if ($video.r_frame_rate -and $video.avg_frame_rate -and
-            $video.r_frame_rate -ne $video.avg_frame_rate) {
-            $fpsMode = "VFR"
-        }
-
-        # Scan type
-        $scan = if ($video.field_order -and $video.field_order -ne "progressive") {
-            "Interlaced"
-        }
-        else {
-            "Progressive"
-        }
-
-        # =============================
-        # BITRATE (robust)
-        # =============================
-        $bitrateMbps = 0.0
-
-        # 1) stream bitrate (best)
-        if ($video.bit_rate -and $video.bit_rate -gt 0) {
-            $bitrateMbps = [math]::Round($video.bit_rate / 1e6, 2)
-        }
-
-        # 2) container / format bitrate (common for MPEG)
-        elseif ($json.format.bit_rate -and $json.format.bit_rate -gt 0) {
-            $bitrateMbps = [math]::Round($json.format.bit_rate / 1e6, 2)
-        }
-
-        # 3) fallback: compute from file size / duration
-        elseif ($json.format.duration -and $json.format.duration -gt 0) {
-            # 🔸 FIX: LiteralPath for size
-            $fileSizeBytes = (Get-Item -LiteralPath $targetPath).Length
-            $bitrateMbps = [math]::Round(
-                ($fileSizeBytes * 8) / $json.format.duration / 1e6,
-                2
-            )
-        }
-
-
-        # Codec
-        $codec = $video.codec_name.ToUpper()
-
-        # =============================
-        # METRICS / POLICY
-        # =============================
-
-        $density = $null
-        if ($bitrateMbps -gt 0 -and $avgFps -gt 0) {
-            $density = Get-CompressionDensity $width $height $avgFps $bitrateMbps
-        }
-
-        $policy = Get-BitratePolicy $height $avgFps $bitrateMbps
-
-        # =============================
-        # RENDER OUTPUT
-        # =============================
-
-        # File (only filename, not full path)
-        # 🔸 FIX: .NET Safe Filename
-        Render-File ([System.IO.Path]::GetFileName($targetPath))
-
-        # Video
-        Render-Video `
-            "$width`x$height" `
-            "$bitrateMbps" `
-            "$avgFps" `
-            $scan `
-            $fpsMode
-
-        # Compression
-        $densityText = if ($density -ne $null) {
-            "{0:N3}" -f $density
-        }
-        else {
-            "N/A"
-        }
-
-        Render-Compression `
-            $densityText `
-            $policy `
-            $codec
-
-        # Geometry
-        Render-Geometry `
-            $sar `
-            $dar
-
-		
-        # Audio
-        if ($audio -and $audio.sample_rate) {
-            Render-Audio $audio.sample_rate
-        }
-        else {
-            Render-Audio "none"
-        }
-    }
-
 }
-
-if ($hadFailures) {
-    throw 'Media inspection completed with one or more failures.'
+foreach ($file in $targets) {
+    try {
+        $result = Invoke-InspectorProbe $ffprobe @('-v','error','-show_streams','-show_format','-of','json',$file.FullName) $TimeoutSeconds -CanCancel:$interactive
+        $metadata = $result.stdout | ConvertFrom-Json
+        if (-not $metadata.streams -or -not $metadata.format) { throw 'Invalid metadata: streams/format missing.' }
+        $entry = New-InspectorEntry $file $metadata $result
+        $report.files.Add($entry)
+        if ($Deep) {
+            $chosen = if ($PSBoundParameters.ContainsKey('StreamIndex')) { $StreamIndex } else { $null }
+            $entry.samples.Add((Get-InspectorPacketSample $ffprobe $entry $StartSeconds $MaxPackets $TimeoutSeconds $chosen -CanCancel:$interactive))
+        }
+        if (-not $interactive) { Write-InspectorReport $report $entry }
+    } catch {
+        $report.failures.Add([ordered]@{ path=$file.FullName; stage='Inspect'; error=$_.Exception.Message })
+        Write-Warning "$($file.FullName): $($_.Exception.Message)"
+    }
 }
+if ($interactive -and $report.files.Count) {
+    . "$PSScriptRoot\lib\Ui.ps1"
+    Show-InspectorUi $report $ffprobe $MaxPackets $TimeoutSeconds
+}
+if ($JsonPath) { Export-InspectorReport $report $JsonPath Json }
+if ($TextPath) { Export-InspectorReport $report $TextPath Text }
+if ($report.failures.Count) { throw 'Media inspection completed with one or more failures (see report).' }

@@ -1,41 +1,40 @@
 # Subtitle Workflow Recovery
 
-## Current status — 2026-08-26
+## Current status — 2026-09-11
 
 The subtitle dependencies and both saved helpers are restored and characterized on
 the current Windows 11 installation. Their reviewed Explorer actions are installed
-under the current user's `HKCU\Software\Classes` scope.
+under the current user's `HKCU\Software\Classes` scope. Upgraded to Subtitle Edit 5.2.0.
 
 ## Dependencies
 
 | Component | Installed state |
 | --- | --- |
-| Subtitle Edit GUI | v5.1.0 at `C:\Program Files\Subtitle Edit` |
-| Subtitle Edit CLI | SeConv v5.1.0 at `C:\Program Files\Subtitle Edit CLI` |
+| Subtitle Edit GUI | v5.2.0 at `C:\Program Files\Subtitle Edit` |
+| Subtitle Edit CLI | SeConv v5.2.0 at `C:\Program Files\Subtitle Edit CLI` |
 | MKVToolNix | v101.0 at `C:\Program Files\MKVToolNix` |
 
 Official SeConv recovery evidence:
 
-- Release: `v5.1.0`, published 2026-07-29 by the official
+- Release: `v5.2.0`, published 2026-09-10 by the official
   `SubtitleEdit/subtitleedit` GitHub project.
 - Asset: `SeConv-Windows-x64.zip`, preserved locally as
-  `D:\Programs\Video\SeConv-Windows-x64-5.1.0.zip`.
-- Size: `42,300,410` bytes.
+  `D:\Programs\Video\SeConv-Windows-x64-5.2.0.zip`.
+- Size: `42,713,078` bytes.
 - Official GitHub asset SHA-256:
-  `CE081A6C6844D44CB1373EE501A963C9E37C788BF757C2FA0B39821EF9969839`.
+  `14C8B467815DD04847E0E7B1E633D222D9C14C6A307ACADC03E21112803780B7`.
 - Installed `seconv.exe` SHA-256:
-  `B3E419E5294E65A8586662A1786ED14E86F97B9B0207C7C071D295B72953FF88`.
+  `5AEA82D6E7F703DB720D6B82148F962D5474EF85FDEDC24C11209DC62E9AC309`.
 - The ZIP contains the MIT license and five files; no installer or EULA was
   accepted by the agent.
 - The binaries are not Authenticode-signed. Trust is anchored to the exact digest
   published by the official GitHub release API.
-- Embedded file/product version is `5.1.0.0` / `5.1.0+38f1dd4...`.
-  `seconv --version` prints `5.0.0`; this is an upstream banner inconsistency in
-  the verified v5.1.0 asset.
+- Embedded file/product version is `5.2.0.0` / `5.2.0+d8e3b8b...`.
+  `seconv --version` accurately prints `5.2.0`.
 
 Official references:
 
-- <https://github.com/SubtitleEdit/subtitleedit/releases/tag/v5.1.0>
+- <https://github.com/SubtitleEdit/subtitleedit/releases/tag/v5.2.0>
 - <https://github.com/SubtitleEdit/subtitleedit/blob/main/docs/reference/command-line.md>
 
 ## Saved workflows
