@@ -23,7 +23,8 @@
     "queues": "D:\\Users\\joty79\\Documents\\Icons\\pwsh.ico",
     "folder": "D:\\Users\\joty79\\Documents\\Icons\\ffmpeg_folder.ico",
     "check-audio": "D:\\Users\\joty79\\Documents\\Icons\\audio_encode.ico",
-    "twin": "D:\\Users\\joty79\\Documents\\Icons\\film.ico"
+    "twin": "D:\\Users\\joty79\\Documents\\Icons\\film.ico",
+    "smartcut": "D:\\Users\\joty79\\Documents\\Icons\\Cut.ico"
   },
   "actions": {
     "inspect-file": {
@@ -73,6 +74,18 @@
       "icon": "twin",
       "coversVerb": "SampleTwin",
       "command": "wt.exe -w 0 new-tab --title \"Sample Twin\" -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\sample-twin\\Sample-Twin.ps1\" \"%1\""
+    },
+    "smartcut-scan-file": {
+      "label": "Smart Cut Scan",
+      "icon": "smartcut",
+      "coversVerb": "SmartCutScan",
+      "command": "wt.exe -w 0 new-tab --title \"Smart Cut Scan\" -- \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut-scan.cmd\" \"%1\" --open --pause"
+    },
+    "smartcut-scan-folder": {
+      "label": "Smart Cut Scan (with subfolders)",
+      "icon": "smartcut",
+      "coversVerb": "SmartCutScan",
+      "command": "wt.exe -w 0 new-tab --title \"Smart Cut Scan\" -- \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut-scan.cmd\" \"%V\" -r --open --pause"
     },
     "remux-mkv-mp4": {
       "label": "Remux to MP4 (Safe Mode)",
@@ -251,14 +264,14 @@
     ],
     "video-common": [
       { "id": "01_Inspect", "actions": ["inspect-file"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "sample-twin-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "sample-twin-file", "smartcut-scan-file"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
       { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
       { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
     ],
     "mp4": [
       { "id": "01_Inspect", "actions": ["inspect-file"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "merge-mp4-srt", "recover-incomplete-mp4", "diagnose-repair-mp4", "sample-twin-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "merge-mp4-srt", "recover-incomplete-mp4", "diagnose-repair-mp4", "sample-twin-file", "smartcut-scan-file"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file", "replace-audio-mp4"] },
       { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
       { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
@@ -266,21 +279,21 @@
     "mkv": [
       { "id": "01_Inspect", "actions": ["inspect-file"] },
       { "id": "02_ExtractSubtitle", "actions": ["extract-mkv-subtitle"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "remux-mkv-mp4", "sample-twin-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "remux-mkv-mp4", "sample-twin-file", "smartcut-scan-file"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
       { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
       { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
     ],
     "ts": [
       { "id": "01_Inspect", "actions": ["inspect-file"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "analyze-ts-file", "fix-ts-file", "sample-twin-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "analyze-ts-file", "fix-ts-file", "sample-twin-file", "smartcut-scan-file"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
       { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
       { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
     ],
     "wmv": [
       { "id": "01_Inspect", "actions": ["inspect-file"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "join-wmv", "sample-twin-file"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-file", "join-wmv", "sample-twin-file", "smartcut-scan-file"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-file"] },
       { "id": "90_AddVideoFile", "separatorBefore": true, "actions": ["add-video-file"] },
       { "id": "91_AddAudioFile", "actions": ["add-audio-file"] }
@@ -304,7 +317,7 @@
     "folder": [
       { "id": "01_Inspect", "actions": ["inspect-folder"] },
       { "id": "02_ConvertVtt", "actions": ["convert-vtt-srt-folder"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-folder", "analyze-ts-folder-selected", "fix-ts-folder-selected", "smart-image-folder"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-folder", "analyze-ts-folder-selected", "fix-ts-folder-selected", "smart-image-folder", "smartcut-scan-folder"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-folder", "check-audio-folder-selected"] },
       { "id": "90_AddVideoFolder", "separatorBefore": true, "actions": ["add-video-folder"] },
       { "id": "91_AddAudioFolder", "actions": ["add-audio-folder"] }
@@ -314,6 +327,7 @@
       { "id": "02_AnalyzeTs", "actions": ["analyze-ts-folder-background"] },
       { "id": "03_FixTs", "actions": ["fix-ts-folder-background"] },
       { "id": "04_ConvertVtt", "actions": ["convert-vtt-srt-background"] },
+      { "id": "04_SmartCutScan", "actions": ["smartcut-scan-folder"] },
       { "id": "05_RunVideoQueue", "separatorBefore": true, "actions": ["run-video-queue"] },
       { "id": "06_RunAudioQueue", "actions": ["run-audio-queue"] }
     ]

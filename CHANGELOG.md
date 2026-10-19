@@ -2,6 +2,10 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-10-19
+
+- Added `Smart Cut Scan` to the Media Tools menu: video file types (Video submenu), folders (Video submenu, with subfolders) and folder background (root, with subfolders). It launches the external scanner `D:\Users\joty79\Documents\ChatGPT\Avidemux\smartcut-scan\smartcut-scan.cmd` in a Windows Terminal tab, opens its HTML report and waits for Enter. Generated with `tools\New-MediaToolsMenu.ps1` (zero legacy gaps, max 7 children per level); HKLM imported elevated and HKCU imported outside the MSIX container; exact readback and the read-only audit show every Media Tools tree matching (the only remaining mismatch is the pre-existing HKLM `RunAudioQueue` background verb). Real Explorer visual acceptance: confirmed by John on 2026-10-20.
+
 ## 2026-09-26
 
 - Media Info 2.4 restores an everyday media-first overview with container, size/duration, video, audio and subtitle facts. Smart Cut hints are optional, technical evidence remains in R/full exports, and C copies the current page. Timing samples open their dedicated results page instead of replacing the overview with a diagnosis.
