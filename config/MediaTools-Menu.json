@@ -76,16 +76,16 @@
       "command": "wt.exe -w 0 new-tab --title \"Sample Twin\" -- pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"D:\\Users\\joty79\\scripts\\encode\\Video\\sample-twin\\Sample-Twin.ps1\" \"%1\""
     },
     "smartcut-scan-file": {
-      "label": "Smart Cut Scan",
+      "label": "Smart Cut Cases",
       "icon": "smartcut",
       "coversVerb": "SmartCutScan",
-      "command": "wt.exe -w 0 new-tab --title \"Smart Cut Scan\" -- \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut-scan.cmd\" \"%1\" --open --pause"
+      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut_cases.py\" \"%1\""
     },
     "smartcut-scan-folder": {
-      "label": "Smart Cut Scan (with subfolders)",
+      "label": "Smart Cut Cases (with subfolders)",
       "icon": "smartcut",
       "coversVerb": "SmartCutScan",
-      "command": "wt.exe -w 0 new-tab --title \"Smart Cut Scan\" -- \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut-scan.cmd\" \"%V\" -r --open --pause"
+      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut_cases.py\" \"%V\""
     },
     "remux-mkv-mp4": {
       "label": "Remux to MP4 (Safe Mode)",

@@ -2,6 +2,10 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-10-20
+
+- `Smart Cut Scan` menu entries now open the Smart Cut Cases desktop app (`smartcut_cases.py`, PySide6, conda env `smartcut-cases`) with the clicked file/folder; labels renamed to `Smart Cut Cases`. Same keys and positions; HKLM imported elevated, HKCU outside the MSIX container; read-only audit: `Media-Tools.reg` 34/34 live roots exact (only the pre-existing `RunAudioQueue` mismatch remains).
+
 ## 2026-10-19
 
 - Added `Smart Cut Scan` to the Media Tools menu: video file types (Video submenu), folders (Video submenu, with subfolders) and folder background (root, with subfolders). It launches the external scanner `D:\Users\joty79\Documents\ChatGPT\Avidemux\smartcut-scan\smartcut-scan.cmd` in a Windows Terminal tab, opens its HTML report and waits for Enter. Generated with `tools\New-MediaToolsMenu.ps1` (zero legacy gaps, max 7 children per level); HKLM imported elevated and HKCU imported outside the MSIX container; exact readback and the read-only audit show every Media Tools tree matching (the only remaining mismatch is the pre-existing HKLM `RunAudioQueue` background verb). Real Explorer visual acceptance: confirmed by John on 2026-10-20.
