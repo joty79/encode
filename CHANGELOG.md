@@ -4,6 +4,7 @@ All notable changes to this repo are recorded here.
 
 ## 2026-10-20
 
+- Smart Cut Cases moved to the SSD: menu entries now run `D:\Users\joty79\scripts\SmartCutCases\smartcut_cases.py` (was the HDD project folder). Re-imported HKLM elevated and HKCU outside the MSIX container; readback shows only the new path; audit `Media-Tools.reg` 34/34 exact.
 - `Smart Cut Scan` menu entries now open the Smart Cut Cases desktop app (`smartcut_cases.py`, PySide6, conda env `smartcut-cases`) with the clicked file/folder; labels renamed to `Smart Cut Cases`. Same keys and positions; HKLM imported elevated, HKCU outside the MSIX container; read-only audit: `Media-Tools.reg` 34/34 live roots exact (only the pre-existing `RunAudioQueue` mismatch remains).
 
 ## 2026-10-19
