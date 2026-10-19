@@ -79,13 +79,13 @@
       "label": "Smart Cut Cases",
       "icon": "smartcut",
       "coversVerb": "SmartCutScan",
-      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut_cases.py\" \"%1\""
+      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" \"%1\""
     },
     "smartcut-scan-folder": {
       "label": "Smart Cut Cases (with subfolders)",
       "icon": "smartcut",
       "coversVerb": "SmartCutScan",
-      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\Documents\\ChatGPT\\Avidemux\\smartcut-scan\\smartcut_cases.py\" \"%V\""
+      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" \"%V\""
     },
     "remux-mkv-mp4": {
       "label": "Remux to MP4 (Safe Mode)",
