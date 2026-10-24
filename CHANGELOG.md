@@ -2,6 +2,10 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-10-24
+
+- Smart Cut Cases scans only the videos in a folder, not its subfolders (John). The folder and folder-background entries are now labelled `Smart Cut Cases` (was `(with subfolders)`). Regenerated with `tools\New-MediaToolsMenu.ps1`: only those two HKCU `MUIVerb` values differ, so only they were set, outside the MSIX container; readback from there shows the new label. Explorer visual check: pending.
+
 ## 2026-10-20
 
 - Smart Cut Cases moved to the SSD: menu entries now run `D:\Users\joty79\scripts\SmartCutCases\smartcut_cases.py` (was the HDD project folder). Re-imported HKLM elevated and HKCU outside the MSIX container; readback shows only the new path; audit `Media-Tools.reg` 34/34 exact.
