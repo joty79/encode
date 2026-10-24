@@ -82,7 +82,7 @@
       "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" \"%1\""
     },
     "smartcut-scan-folder": {
-      "label": "Smart Cut Cases (with subfolders)",
+      "label": "Smart Cut Cases",
       "icon": "smartcut",
       "coversVerb": "SmartCutScan",
       "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" \"%V\""
