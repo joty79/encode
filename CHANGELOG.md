@@ -2,6 +2,10 @@
 
 All notable changes to this repo are recorded here.
 
+## 2026-10-29
+
+- New `Collect Smart Cut samples` entry (action `smartcut-collect-folder`, John): folder → Media Tools → Video, and folder background → Media Tools (after `Smart Cut Cases`). Runs the Smart Cut Cases collector into one shared collection, `Z:\SmartCut samples`, in a console window that waits at the end. The command calls `python.exe` directly, without `wt.exe` (its parser splits a folder name at `;`); `SmartCutCases\tests\collect_menu_args_test.py` checks the exact command for `Z:\`, `;`, `%`, Unicode, spaces and UNC. Regenerated with `tools\New-MediaToolsMenu.ps1` (0 missing legacy mappings, 0 mismatches); the HKCU part was imported outside the MSIX container with a backup of both owned trees first; readback from there shows both new entries and the unchanged `Smart Cut Cases` entries. Reviewed by Astra and Sol. Explorer visual check: pending (John).
+
 ## 2026-10-24
 
 - Smart Cut Cases scans only the videos in a folder, not its subfolders (John). The folder and folder-background entries are now labelled `Smart Cut Cases` (was `(with subfolders)`). Regenerated with `tools\New-MediaToolsMenu.ps1`: only those two HKCU `MUIVerb` values differ, so only they were set, outside the MSIX container; readback from there shows the new label. Explorer visual check: pending.

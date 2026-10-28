@@ -1,12 +1,12 @@
 ﻿{
-  "GeneratedAt": "2026-10-24T01:13:26.0087596Z",
+  "GeneratedAt": "2026-10-28T22:11:56.2854629Z",
   "ManifestPath": "D:\\Users\\joty79\\scripts\\encode\\config\\MediaTools-Menu.json",
   "OutputHive": "All",
   "OutputRegPath": "D:\\Users\\joty79\\scripts\\encode\\Video\\Media-Tools.reg",
   "RemovalRegPath": "D:\\Users\\joty79\\scripts\\encode\\Video\\Remove-Media-Tools.reg",
   "TargetRoots": 34,
   "GeneratedTargetRoots": 34,
-  "CoverageMappings": 152,
+  "CoverageMappings": 154,
   "MissingLegacyCoverage": [],
   "ExtraCoverage": [
     "extension|.aac|mediainfo",
@@ -150,6 +150,7 @@
     "folder|directory|fixtstomp4noreencode",
     "folder|directory|convertwebpsmart",
     "folder|directory|smartcutscan",
+    "folder|directory|smartcutcollect",
     "folder|directory|audioencode",
     "folder|directory|movenoaudio",
     "folder|directory|addtoencodequeue",
@@ -159,11 +160,12 @@
     "folderbackground|directory background|fixtstomp4noreencode",
     "folderbackground|directory background|converttosrt",
     "folderbackground|directory background|smartcutscan",
+    "folderbackground|directory background|smartcutcollect",
     "folderbackground|directory background|runencodequeue"
   ],
   "LegacyCommandMismatches": [],
   "MaxVisibleChildrenPerLevel": 15,
-  "MaxObservedVisibleChildrenPerLevel": 7,
+  "MaxObservedVisibleChildrenPerLevel": 8,
   "Targets": [
     {
       "Hive": "HKLM",
@@ -691,7 +693,7 @@
       "RootPath": "HKEY_CURRENT_USER\\Software\\Classes\\Directory\\shell\\MediaTools",
       "RootIcon": "root",
       "RootChildren": 6,
-      "ActionCount": 11,
+      "ActionCount": 12,
       "Actions": [
         "inspect-folder",
         "convert-vtt-srt-folder",
@@ -700,6 +702,7 @@
         "fix-ts-folder-selected",
         "smart-image-folder",
         "smartcut-scan-folder",
+        "smartcut-collect-folder",
         "audio-folder",
         "check-audio-folder-selected",
         "add-video-folder",
@@ -713,14 +716,15 @@
       "Profile": "folder-background",
       "RootPath": "HKEY_CURRENT_USER\\Software\\Classes\\Directory\\Background\\shell\\MediaTools",
       "RootIcon": "root",
-      "RootChildren": 7,
-      "ActionCount": 7,
+      "RootChildren": 8,
+      "ActionCount": 8,
       "Actions": [
         "check-audio-folder-background",
         "analyze-ts-folder-background",
         "fix-ts-folder-background",
         "convert-vtt-srt-background",
         "smartcut-scan-folder",
+        "smartcut-collect-folder",
         "run-video-queue",
         "run-audio-queue"
       ]

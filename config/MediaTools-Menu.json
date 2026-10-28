@@ -87,6 +87,12 @@
       "coversVerb": "SmartCutScan",
       "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\pythonw.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" \"%V\""
     },
+    "smartcut-collect-folder": {
+      "label": "Collect Smart Cut samples",
+      "icon": "smartcut",
+      "coversVerb": "SmartCutCollect",
+      "command": "\"E:\\Compilers\\miniconda\\envs\\smartcut-cases\\python.exe\" \"D:\\Users\\joty79\\scripts\\SmartCutCases\\smartcut_cases.py\" collect --out \"Z:\\SmartCut samples\" --pause \"%V\""
+    },
     "remux-mkv-mp4": {
       "label": "Remux to MP4 (Safe Mode)",
       "icon": "repair",
@@ -317,7 +323,7 @@
     "folder": [
       { "id": "01_Inspect", "actions": ["inspect-folder"] },
       { "id": "02_ConvertVtt", "actions": ["convert-vtt-srt-folder"] },
-      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-folder", "analyze-ts-folder-selected", "fix-ts-folder-selected", "smart-image-folder", "smartcut-scan-folder"] },
+      { "id": "10_Video", "label": "Video", "icon": "video", "actions": ["encode-video-folder", "analyze-ts-folder-selected", "fix-ts-folder-selected", "smart-image-folder", "smartcut-scan-folder", "smartcut-collect-folder"] },
       { "id": "20_Audio", "label": "Audio", "icon": "audio", "actions": ["audio-folder", "check-audio-folder-selected"] },
       { "id": "90_AddVideoFolder", "separatorBefore": true, "actions": ["add-video-folder"] },
       { "id": "91_AddAudioFolder", "actions": ["add-audio-folder"] }
@@ -328,6 +334,7 @@
       { "id": "03_FixTs", "actions": ["fix-ts-folder-background"] },
       { "id": "04_ConvertVtt", "actions": ["convert-vtt-srt-background"] },
       { "id": "04_SmartCutScan", "actions": ["smartcut-scan-folder"] },
+      { "id": "04_SmartCutScanCollect", "actions": ["smartcut-collect-folder"] },
       { "id": "05_RunVideoQueue", "separatorBefore": true, "actions": ["run-video-queue"] },
       { "id": "06_RunAudioQueue", "actions": ["run-audio-queue"] }
     ]
